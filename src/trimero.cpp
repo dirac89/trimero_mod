@@ -24,7 +24,7 @@ void Trimer_energies_field (int n1,double dc_field_au);
 using namespace std;
 
 //**************************************************************
-int main() {
+int main(int argc, char *argv[]) {
 
     // Dimer_energies_one( 35, dc_field_au);
     //  Dimer_energies_field(35,dc_field_au);
@@ -77,38 +77,42 @@ void Trimer_energies_field (int n1,double dc_field_au){
     int n11, n12, n21,n22;
 
 
-    gsl_matrix * As = gsl_matrix_alloc (rows,cols) ; FILE* fAs = fopen("../../data/Wavefunction/rvsAS.dat","r")  ;
-    gsl_matrix_fscanf(fAs, As) ;  fclose(fAs) ;
+    gsl_matrix * As = gsl_matrix_alloc (rows,cols);
+    {
+        FILE* fAs = fopen("data/Wavefunction/rvsAS.dat","r");
+        gsl_matrix_fscanf(fAs, As);
+        fclose(fAs);
+    }
 
-    gsl_matrix * Ap = gsl_matrix_alloc (rows,cols) ; FILE* fAp = fopen("../../data/Wavefunction/rvsAP.dat","r")  ;
+    gsl_matrix * Ap = gsl_matrix_alloc (rows,cols) ; FILE* fAp = fopen("data/Wavefunction/rvsAP.dat","r")  ;
     gsl_matrix_fscanf(fAp, Ap) ;  fclose(fAp) ;
 
-    gsl_matrix * As1 = gsl_matrix_alloc (rows,cols) ; FILE* fAs1 = fopen("../../data/Wavefunction/rvsAS.dat","r")  ;
+    gsl_matrix * As1 = gsl_matrix_alloc (rows,cols) ; FILE* fAs1 = fopen("data/Wavefunction/rvsAS.dat","r")  ;
     gsl_matrix_fscanf(fAs1, As1) ;  fclose(fAs1) ;
 
-    gsl_matrix * Ap1 = gsl_matrix_alloc (rows,cols) ; FILE* fAp1 = fopen("../../data/Wavefunction/rvsAP.dat","r")  ;
+    gsl_matrix * Ap1 = gsl_matrix_alloc (rows,cols) ; FILE* fAp1 = fopen("data/Wavefunction/rvsAP.dat","r")  ;
     gsl_matrix_fscanf(fAp1, Ap1) ;  fclose(fAp1) ;
 
     cout << "Manifold n1 = "<<n1<<" plots of E(R) type are included !\n" ;
 
 
 
-    gsl_matrix * R38s = gsl_matrix_alloc (rows,cols) ; FILE* fR38s  = fopen("../../data/Wavefunction/rvsR38s.dat","r")  ;
+    gsl_matrix * R38s = gsl_matrix_alloc (rows,cols) ; FILE* fR38s  = fopen("data/Wavefunction/rvsR38s.dat","r")  ;
     gsl_matrix_fscanf(fR38s, R38s)    ; fclose(fR38s) ;
 
-    gsl_matrix * R36d = gsl_matrix_alloc (rows,cols) ; FILE* fR36d  = fopen("../../data/Wavefunction/rvsR36d.dat","r") ;
+    gsl_matrix * R36d = gsl_matrix_alloc (rows,cols) ; FILE* fR36d  = fopen("data/Wavefunction/rvsR36d.dat","r") ;
     gsl_matrix_fscanf(fR36d, R36d)    ; fclose(fR36d) ;
 
-    gsl_matrix * R37p = gsl_matrix_alloc (rows,cols) ; FILE* fR37p  = fopen("../../data/Wavefunction/rvsR37p.dat","r") ;
+    gsl_matrix * R37p = gsl_matrix_alloc (rows,cols) ; FILE* fR37p  = fopen("data/Wavefunction/rvsR37p.dat","r") ;
     gsl_matrix_fscanf(fR37p, R37p)    ; fclose(fR37p) ;
 
-    gsl_matrix * DR38s = gsl_matrix_alloc (rows,cols) ; FILE* fDR38s  = fopen("../../data/Wavefunction/rvsDR38s.dat","r")  ;
+    gsl_matrix * DR38s = gsl_matrix_alloc (rows,cols) ; FILE* fDR38s  = fopen("data/Wavefunction/rvsDR38s.dat","r")  ;
     gsl_matrix_fscanf(fDR38s, DR38s)    ; fclose(fDR38s) ;
 
-    gsl_matrix * DR36d = gsl_matrix_alloc (rows,cols) ; FILE* fDR36d  = fopen("../../data/Wavefunction/rvsDR36d.dat","r") ;
+    gsl_matrix * DR36d = gsl_matrix_alloc (rows,cols) ; FILE* fDR36d  = fopen("data/Wavefunction/rvsDR36d.dat","r") ;
     gsl_matrix_fscanf(fDR36d, DR36d)    ; fclose(fDR36d) ;
 
-    gsl_matrix * DR37p = gsl_matrix_alloc (rows,cols) ; FILE* fDR37p  = fopen("../../data/Wavefunction/rvsDR37p.dat","r") ;
+    gsl_matrix * DR37p = gsl_matrix_alloc (rows,cols) ; FILE* fDR37p  = fopen("data/Wavefunction/rvsDR37p.dat","r") ;
     gsl_matrix_fscanf(fDR37p, DR37p)    ; fclose(fDR37p) ;
 
 
@@ -141,7 +145,7 @@ void Trimer_energies_field (int n1,double dc_field_au){
     gsl_matrix * Radial = gsl_matrix_calloc(max, max) ;
 
     ifstream infile;
-    infile.open ("../../data/Wavefunction/exp_val_r.txt");
+    infile.open ("data/Wavefunction/exp_val_r.txt");
 
 
     for(i = 0; i <= n1-1-1 ; i++){
