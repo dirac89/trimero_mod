@@ -34,7 +34,7 @@ trimer_exe: $(OBJECTS)
 # remove objects and executable_________________________________________________________________________________________________________________________________
 clean:
 	#rm -rf $(OBJECTS)
-	rm -rf trimer_exe 
+	rm -rf trimer_exe
 
 # tool that generates dependencies_______________________________________________________________________________________________________________________________
 dependencies:
