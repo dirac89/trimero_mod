@@ -41,7 +41,7 @@
 #include "FermiPotentials.h"
 
 
-#include "parameter.h"
+#include "Parameter.h"
 
 void Trimer_energies_field (int n1,double dc_field_au);
 
