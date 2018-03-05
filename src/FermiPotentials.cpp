@@ -185,7 +185,7 @@ double FermiPotentials::Vsp(){
 		
 		}
 		
-
+/*
 void FermiPotentials::setWave2(double givenwave2){
 	
 	wave2=givenwave2;
@@ -213,3 +213,4 @@ void FermiPotentials::setDWave1(double givendwave1){
 	
 	}
 	
+*/

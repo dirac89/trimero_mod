@@ -19,12 +19,12 @@ public:
 	double Vs ();
 	double Vp ();
 	double Vsp ();
-	void setWave2(double givenwave2);
+	/*void setWave2(double givenwave2);
 	void setDWave2(double givendwave2);
 	void setWave1(double givenwave1);
 	void setDWave1(double givendwave1);
 
-	
+	*/
 	
 };
 

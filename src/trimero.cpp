@@ -75,6 +75,7 @@ void Trimer_energies_field (int n1,double dc_field_au){
   Atom rubidium(n1, oqn); 
 
   
+  
   const int lc = 2 ;//lc=2
   const int cols = 2 ;                                              
   const int rows =776 ; 
@@ -93,6 +94,12 @@ void Trimer_energies_field (int n1,double dc_field_au){
   double R38s_R, R36d_R, R37p_R, DR38s_R, DR36d_R, DR37p_R ;
   double radial;
     
+   double wave_1, wave1_2, Dwave_1, Dwave1_2;
+	      
+   double wave_2, wave2_1, Dwave_2, Dwave2_1;
+   
+   int n11, n12, n21,n22;
+  
   
   gsl_matrix * As = gsl_matrix_alloc (rows,cols) ; FILE* fAs = fopen("rvsAS.dat","r")  ;  
   gsl_matrix_fscanf(fAs, As) ;  fclose(fAs) ;   
@@ -134,6 +141,8 @@ void Trimer_energies_field (int n1,double dc_field_au){
   ofstream store2DShift_au("Trimer_R_sp_wave_N35_R_300_au.dat") ;     
       
   const int max = n1*n1;
+  
+  //cout<<max<<endl;
 
   gsl_matrix * spV = gsl_matrix_calloc(max, max) ;                                                               
   gsl_vector * evalues = gsl_vector_calloc (max) ;                                                            
@@ -209,7 +218,7 @@ void Trimer_energies_field (int n1,double dc_field_au){
         
 	cout<<"Building the Hamiltonian matrix"<<endl;	
 	     
-   
+	
     for(i = 0; i <= n1-1 ; i++){ 
       k1=0;	
       for(k1 = 1 ;k1 <= 2*i+1 ; k1++){ m1=k1-i-1;
@@ -218,40 +227,90 @@ void Trimer_energies_field (int n1,double dc_field_au){
 
 	  // constructing the Hamiltonian  matrix 
 	  //  cout<<m1<<"\t"<<m2<<"\t"<<gsl_matrix_get(spV,i*i+k1-1,j*j+k2-1)<<endl;
+	  
+	//  FermiPotentials fermi_1(s, n11, n12,i, j, m1, m2, R, theta, AS, AP,wave_1,wave1_2, Dwave_1,Dwave1_2);
+	//  FermiPotentials fermi_2(s, n21, n22,i, j, m1, m2, R1, theta1, AS1, AP1,wave_2,wave2_1, Dwave_2,Dwave2_1); 
+   
 
 	  if  ((i<3)&&(j<3)) {
+		  
 	    if ((i==1)&& (j==1)){
-	      wave_R = gsl_matrix_get(R37p,row,1) ; 	Dwave_R = gsl_matrix_get(DR37p,row,1) ;
-	      wave_R1 = gsl_matrix_get(R37p,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR37p,row1,1) ;}
+	      wave_R = gsl_matrix_get(R37p,row,1) ; 	
+	      
+	      Dwave_R = gsl_matrix_get(DR37p,row,1) ;
+	      
+	      wave_R1 = gsl_matrix_get(R37p,row1,1) ; 	
+	      
+	      Dwave_R1 = gsl_matrix_get(DR37p,row1,1) ;
+	      }
+	    
 	    if ((i==2)&&(j==2)){
-	      wave_R = gsl_matrix_get(R36d,row,1) ; 	Dwave_R = gsl_matrix_get(DR36d,row,1) ;
-	      wave_R1 = gsl_matrix_get(R36d,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR36d,row1,1) ;}
+	      
+	      wave_R = gsl_matrix_get(R36d,row,1) ; 	
+	      
+	      Dwave_R = gsl_matrix_get(DR36d,row,1) ;
+	      
+	      wave_R1 = gsl_matrix_get(R36d,row1,1) ; 	
+	      
+	      Dwave_R1 = gsl_matrix_get(DR36d,row1,1) ;
+	      }
+	    
 	    if ((i==0)&&(j==0)){
-	      wave_R = gsl_matrix_get(R38s,row,1) ; 	Dwave_R = gsl_matrix_get(DR38s,row,1) ;
-	      wave_R1 = gsl_matrix_get(R38s,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR38s,row1,1) ;}
+			
+	      wave_R = gsl_matrix_get(R38s,row,1) ; 	
+	      
+	      Dwave_R = gsl_matrix_get(DR38s,row,1) ;
+	      
+	      wave_R1 = gsl_matrix_get(R38s,row1,1) ; 	
+	      
+	      Dwave_R1 = gsl_matrix_get(DR38s,row1,1) ;
+	      }
 	      
 	    k2=0;
               
 	      for(k2 = 1 ;k2 <= 2*j+1 ; k2++){ m2=k2-j-1;
 
 	      delta_ij=0;
+	      
 	      if ((i==j)&&(m1==m2)){delta_ij=1.;}
 	      field_contri=0.;
 	      if ((i==j+1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
 	      if ((i==j-1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
 	      
-	      Atom rubidium38s(n1+3-i, i);
 	      
-	      FermiPotentials fermi_1(s, n1+3-i, n1+3-j,i, j, m1, m2, R, theta, AS, AP,wave_R,wave1_R, Dwave_R,Dwave1_R);
-	      FermiPotentials fermi_2(s, n1+3-i, n1+3-j,i, j, m1, m2, R1, theta1, AS1, AP1,wave_R1,wave1_R1, Dwave_R1,Dwave1_R1);
+	      n11=n1+3-i;
+	      n21=n1+3-i;
 	      
+	      n12=n1+3-j;
+	      n22=n1+3-j;
+	      
+	      wave_1=wave_R;
+	      wave1_2=wave1_R;
+	      
+	      Dwave_1=Dwave_R;
+	      Dwave1_2=Dwave1_R;
+	      
+	      wave_2=wave_R1;
+	      wave2_1=wave1_R1;
+	      
+	      Dwave_2=Dwave_R1;
+	      Dwave2_1=Dwave1_R1;
+	      
+	     //FermiPotentials fermi_1(s, n1+3-i, n1+3-j,i, j, m1, m2, R, theta, AS, AP,wave_R,wave1_R, Dwave_R,Dwave1_R);
+	     // FermiPotentials fermi_2(s, n1+3-i, n1+3-j,i, j, m1, m2, R1, theta1, AS1, AP1,wave_R1,wave1_R1, Dwave_R1,Dwave1_R1);
+	      
+	     Atom rubidium_mod(n11, i); 
+	     FermiPotentials fermi_1(s, n11, n12,i, j, m1, m2, R, theta, AS, AP,wave_1,wave1_2, Dwave_1,Dwave1_2);
+	     FermiPotentials fermi_2(s, n21, n22,i, j, m1, m2, R1, theta1, AS1, AP1,wave_2,wave2_1, Dwave_2,Dwave2_1); 
 		
-	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1, rubidium38s.E_Rb()*delta_ij + 
-			     fermi_1.Vs() +
-			     fermi_2.Vs()+field_contri);
+	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1, rubidium_mod.E_Rb()*delta_ij + 
+			     fermi_1.Vsp() +
+			     fermi_2.Vsp()+field_contri);
+			     
+			  //   cout<<"Energia\t"<<rubidium_mod.E_Rb()<<"i"<<i<<"n11"<<n11<<endl;
 	    }} 
 
-
+/*
 
 	  if  ((i<3)&&(j>2)) {
 	    if (i==1){
@@ -278,9 +337,11 @@ void Trimer_energies_field (int n1,double dc_field_au){
 	      FermiPotentials fermi_21(s, n1+3-i, n1,i, j, m1, m2, R1, theta1, AS1, AP1,wave_R1,0., Dwave_R1,0.);
 
 	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
-			     fermi_11.Vs()+
-			     fermi_21.Vs()+field_contri );
+			     fermi_11.Vsp()+
+			     fermi_21.Vsp()+field_contri );
 	    }}
+	
+	
 	  if  ((i>2)&&(j<3)) {
 	    if (j==0){
 	      wave_R = gsl_matrix_get(R38s,row,1) ; 	Dwave_R = gsl_matrix_get(DR38s,row,1) ;
@@ -310,8 +371,8 @@ void Trimer_energies_field (int n1,double dc_field_au){
 
 
 	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
-			     fermi_12.Vs() +
-			     fermi_22.Vs()+field_contri);
+			     fermi_12.Vsp() +
+			     fermi_22.Vsp()+field_contri);
 	    }}
 
 
@@ -332,10 +393,11 @@ void Trimer_energies_field (int n1,double dc_field_au){
 	      FermiPotentials fermi_23(s, n1,n1, i, j, m1, m2, R1, theta1, AS1, AP1, 0., 0., 0., 0.);
 
 	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1, rubidium35.E_Rb()*delta_ij + 
-			     fermi_13.Vs()+
-			     fermi_23.Vs()+field_contri) ;
+			     fermi_13.Vsp()+
+			     fermi_23.Vsp()+field_contri) ;
 	    }}
-	}}}
+	*/}
+	}}
 
 
 	cout<<"Before Diagonalization"<<endl;
