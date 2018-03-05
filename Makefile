@@ -17,7 +17,7 @@ LIB_PATH     = -L/usr/software/gsl-2.4/
 
 # compiler______________________________________________________________________
 COMP         = g++
-COMP_FLAGS   = $(INCLUDE_PATH) -O3
+COMP_FLAGS   = $(INCLUDE_PATH) -g3 -O0
 
 # linker________________________________________________________________________
 LINK         = g++

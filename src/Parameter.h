@@ -5,8 +5,8 @@
  *      Author: dirac89
  */
 
-//#ifndef PARAMETER_H_
-//#define PARAMETER_H_
+#ifndef PARAMETER_H_
+#define PARAMETER_H_
 
 #define pi  4.*atan(1.)
 #define ex  exp(1.)
@@ -27,4 +27,4 @@ int oqn=3;
 double dc_field=300.; // Aqui se define el campo electrico en V/m
 double dc_field_au=dc_field*vpermtoau;// Aqui esta pasando a unidades atomicas.
 
-//#endif /* PARAMETER_H_ */
+#endif /* PARAMETER_H_ */
