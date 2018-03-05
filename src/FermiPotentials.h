@@ -5,27 +5,32 @@
  *      Author: dirac89
  */
 
-#ifndef FermiPotentials_H_
-#define FermiPotentials_H_
+#ifndef FERMIPOTENTIALS_H_
+#define FERMIPOTENTIALS_H_
+
+#include "Laplacian.h"
 
 class FermiPotentials {
-private:
-	int s, n, n2, li, lj, mi, mj;
-	double r1, theta1, As1, wave1, wave2;
-	double Ap1, Dwave1, Dwave2;
 public:
-	FermiPotentials(int s1, int n1, int n21, int li1, int lj1, int mi1, int mj1, double r11, double theta11, double As11, double wave11,double wave21, double Ap11, double Dwave11, double Dwave21);
-	virtual ~FermiPotentials();
-	double Vs ();
-	double Vp ();
-	double Vsp ();
+	FermiPotentials(int s, int n, int n2,
+	                int li, int lj,
+	                int mi, int mj,
+	                double r1, double theta1, double As1,
+	                double wave1, double wave2,
+	                double Ap1, double Dwave1, double Dwave2);
+	double Vs() const;
+	double Vp() const;
+	double Vsp() const;
 	/*void setWave2(double givenwave2);
 	void setDWave2(double givendwave2);
 	void setWave1(double givenwave1);
 	void setDWave1(double givendwave1);
 
 	*/
-	
+private:
+    int s_, n_, n2_, li_, lj_, mi_, mj_;
+    double r1_, theta1_, as1_, wave1_, wave2_;
+    double ap1_, dWave1_, dWave2_;
 };
 
 #endif /* THETADERIVATE_H_ */

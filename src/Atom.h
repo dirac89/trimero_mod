@@ -21,6 +21,4 @@ public:
     virtual ~Atom();
 };
 
-
-
 #endif /* ATOM_H_ */
