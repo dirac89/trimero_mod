@@ -30,7 +30,8 @@ FermiPotentials::FermiPotentials(int s1, int n1, int n21, int li1, int lj1, int 
 double FermiPotentials::Vs() const {
 
     double x1 = cos(theta1_) ;
-    if (( li_>2) && (lj_>2 )) {  //""" Degenerated Part
+    if (( li_>2) && (lj_>2 ))  //""" Degenerated Part
+    {
 
         double Vs1 = 2.*pi*as1_*Spherical(li_, mi_, x1) *Spherical(lj_, mj_, x1)
 		         *gsl_sf_hydrogenicR (n_, li_, 1., r1_) *gsl_sf_hydrogenicR (n2_, lj_, 1., r1_) ;
@@ -38,21 +39,24 @@ double FermiPotentials::Vs() const {
         return Vs1 ;
     }
 
-    if (( li_<=2)&& (lj_>2 )) {  //"Degenerated Part
+    if (( li_<=2)&& (lj_>2 ))  //"Degenerated Part
+    {
 
         double Vs1 = 2.*pi*as1_*Spherical(li_, mi_, x1) *Spherical(lj_, mj_, x1)
 		         *gsl_sf_hydrogenicR (n2_, lj_, 1., r1_) *wave1_;
         return Vs1;
     }
 
-    if (( li_>2)&& (lj_<=2 )) {  //"Degenerated Part
+    if (( li_>2)&& (lj_<=2 )) //"Degenerated Part
+    {
 
         double Vs1 = 2.*pi*as1_*Spherical(li_, mi_, x1) *Spherical(lj_, mj_, x1)
 		         *gsl_sf_hydrogenicR (n_, li_, 1., r1_) *wave2_;
         return Vs1;
     }
 
-    else { //"Non-Degenerated Part
+    else //"Non-Degenerated Part
+    {
         double Vs1 = 2.*pi* as1_* Spherical(li_, mi_, x1) *Spherical(lj_, mj_, x1) * wave1_* wave2_ ;
         return Vs1;
     }
@@ -62,55 +66,69 @@ double FermiPotentials::Vs() const {
 
 double FermiPotentials::Vp() const{
 
-    double x1 = cos(theta1_) ;
+    double x1 = cos(theta1_);
 
-    if (( li_>2)&& (lj_>2 )) {  //"""""""""""" Degenerated Part
+    if (( li_>2)&& (lj_>2 )) //"""""""""""" Degenerated Part
+    {
 
         double VpA1 = 6.*pi*ap1_*Spherical(li_, mi_, x1)*Spherical(lj_, mj_, x1)
-              *DRnl(n_, li_, r1_)* DRnl(n2_, lj_, r1_) ;
+        				*DRnl(n_, li_, r1_)* DRnl(n2_, lj_, r1_) ;
 
-        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)* gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)
-              * gsl_sf_hydrogenicR (n_, li_, 1., r1_) *pow(r1_, -2.) ;
+        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)
+        				* gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)
+						* gsl_sf_hydrogenicR (n_, li_, 1., r1_) *pow(r1_, -2.) ;
 
         double VpC1 =6.*pi*ap1_* DPhilm(li_, mi_, theta1_)* DPhilm(lj_, mj_, theta1_)
-              *gsl_sf_hydrogenicR (n_, li_, 1., r1_)* gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)*pow(r1_, -2.) ;
+            		   *gsl_sf_hydrogenicR (n_, li_, 1., r1_)
+					   * gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)*pow(r1_, -2.) ;
 
         return  (VpA1+VpB1+VpC1);
     }
 
-    if (( li_<=2 )&&(lj_>2 )) {  //"""""""""""" Degenerated Part
+    if (( li_<=2 )&&(lj_>2 ))  //"""""""""""" Degenerated Part
+    {
 
-        double VpA1 = 6.*pi*ap1_* Spherical(li_, mi_, x1)*Spherical(lj_, mj_, x1)*DRnl(n2_, lj_, r1_)*dWave1_ ;
+        double VpA1 = 6.*pi*ap1_* Spherical(li_, mi_, x1)*Spherical(lj_, mj_, x1)
+        				*DRnl(n2_, lj_, r1_)*dWave1_ ;
 
-        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)* gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)
-              * wave1_ *pow(r1_, -2.) ;
+        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)
+        				* gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)
+						* wave1_ *pow(r1_, -2.) ;
 
-        double VpC1 =6.*pi*ap1_* DPhilm(li_, mi_, theta1_)* DPhilm(lj_, mj_, theta1_)*
-                gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)*wave1_*pow(r1_, -2.) ;
+        double VpC1 =6.*pi*ap1_* DPhilm(li_, mi_, theta1_)* DPhilm(lj_, mj_, theta1_)
+						*gsl_sf_hydrogenicR (n2_, lj_, 1., r1_)*wave1_*pow(r1_, -2.) ;
 
         return  (VpA1+VpB1+VpC1) ;
     }
 
-    if (( li_>2 )&&(lj_<=2 )) {  //"""""""""""" Degenerated Part
+    if (( li_>2 )&&(lj_<=2 )) //"""""""""""" Degenerated Part
+    {
 
-        double VpA1 = 6.*pi*ap1_* Spherical(li_, mi_, x1)*Spherical(lj_, mj_, x1)*DRnl(n_, li_, r1_)*dWave2_ ;
+        double VpA1 = 6.*pi*ap1_* Spherical(li_, mi_, x1)*Spherical(lj_, mj_, x1)
+        				*DRnl(n_, li_, r1_)*dWave2_ ;
 
-        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)* gsl_sf_hydrogenicR (n_, li_, 1., r1_)
-              * wave2_ *pow(r1_, -2.) ;
+        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)
+        				*gsl_sf_hydrogenicR (n_, li_, 1., r1_)
+						*wave2_ *pow(r1_, -2.) ;
 
-        double VpC1 =6.*pi*ap1_* DPhilm(li_, mi_, theta1_)* DPhilm(lj_, mj_, theta1_)*
-                gsl_sf_hydrogenicR (n_, li_, 1., r1_)*wave2_*pow(r1_, -2.) ;
+        double VpC1 =6.*pi*ap1_* DPhilm(li_, mi_, theta1_)* DPhilm(lj_, mj_, theta1_)
+        			   *gsl_sf_hydrogenicR (n_, li_, 1., r1_)
+					   *wave2_*pow(r1_, -2.) ;
 
         return  (VpA1+VpB1+VpC1);
     }
 
-    else { //"""""""""" Non-Degenerated Part
+    else //"""""""""" Non-Degenerated Part
+    {
 
-        double VpA1 = 6.*pi*ap1_*Spherical(li_, mi_, x1)*Spherical(lj_, mj_, x1)* dWave1_* dWave2_ ;
+        double VpA1 = 6.*pi*ap1_*Spherical(li_, mi_, x1)*Spherical(lj_, mj_, x1)
+        				* dWave1_* dWave2_ ;
 
-        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)* wave1_* wave2_* pow(r1_, -2.) ;
+        double VpB1 = 6.*pi*ap1_* DOlm(li_, mi_, theta1_)* DOlm(lj_, mj_, theta1_)
+        				* wave1_* wave2_* pow(r1_, -2.) ;
 
-        double VpC1 = 6.*pi*ap1_* DPhilm(li_, mi_,theta1_)* DPhilm(lj_, mj_, theta1_)*wave1_*wave2_*pow(r1_, -2.);
+        double VpC1 = 6.*pi*ap1_* DPhilm(li_, mi_,theta1_)* DPhilm(lj_, mj_, theta1_)
+        				*wave1_*wave2_*pow(r1_, -2.);
 
         return  (VpA1+VpB1+VpC1);
     }

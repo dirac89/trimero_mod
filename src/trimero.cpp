@@ -324,8 +324,10 @@ void Trimer_energies_field (int n1,double dc_field_au){
 							Atom rubidium_mod(n11, i);
 
 
-	                        FermiPotentials fermi_1(s, n11, n12, i, j, m1, m2, R,  theta,  AS,wave_1, wave1_2, AP, Dwave_1, Dwave1_2);
-							FermiPotentials fermi_2(s, n21, n22, i, j, m1, m2, R1, theta1, AS1,wave_2, wave2_1, AP1,  Dwave_2, Dwave2_1);
+	                        FermiPotentials fermi_1(s, n11, n12, i, j, m1, m2, R,  theta,
+	                        		AS,wave_1, wave1_2, AP, Dwave_1, Dwave1_2);
+							FermiPotentials fermi_2(s, n21, n22, i, j, m1, m2, R1, theta1,
+									AS1,wave_2, wave2_1, AP1,  Dwave_2, Dwave2_1);
 
 							gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
 							rubidium_mod.E_Rb()*delta_ij +
@@ -568,10 +570,16 @@ void Trimer_energies_field (int n1,double dc_field_au){
 		store2DShift_au.precision(15) ; store2DShift_au << R << "\t" ;
 
 
-		for (i=0; i<=max-1;i++){store2DShift << (gsl_vector_get (evalues, max-1-i )-rubidium.E_Rb())*EhtoGHz << "\t";}
+		for (i=0; i<=max-1;i++)
+		{
+			store2DShift << (gsl_vector_get (evalues, max-1-i )-rubidium.E_Rb())*EhtoGHz << "\t";
+		}
 		store2DShift<< endl ;
 
-		for (i=0; i<=max-1;i++){store2DShift_au << (gsl_vector_get (evalues, max-1-i )-rubidium.E_Rb()) << "\t";}
+		for (i=0; i<=max-1;i++)
+		{
+			store2DShift_au << (gsl_vector_get (evalues, max-1-i )-rubidium.E_Rb()) << "\t";
+		}
 		store2DShift_au<< endl ;
 
 	}

@@ -48,10 +48,12 @@ double Atom::Angular_dc_field(int l, int l1, int m, int m1){
     double term1=0.;
 
     if (m==m1){
-        if (l==l1-1){
+        if (l==l1-1)
+        {
             term1=sqrt((l1+m1)*(l1-m1)/(4.*l1*l1-1));
         }
-        if (l==l1+1){
+        if (l==l1+1)
+        {
             term1=sqrt((l1+m1+1)*(l1-m1+1)/(2.*l1+1)/(2.*l1+3));
         }
         return term1;
