@@ -90,33 +90,65 @@ void Trimer_energies_field (int n1,double dc_field_au){
 	}
 
 
-	gsl_matrix * As1 = gsl_matrix_alloc (rows,cols) ; FILE* fAs1 = fopen("data/Wavefunction/rvsAS.dat","r")  ;
-	gsl_matrix_fscanf(fAs1, As1) ;  fclose(fAs1) ;
+	gsl_matrix * As1 = gsl_matrix_alloc (rows,cols) ;
+	{
+		FILE* fAs1 = fopen("data/Wavefunction/rvsAS.dat","r")  ;
+		gsl_matrix_fscanf(fAs1, As1) ;
+		fclose(fAs1) ;
 
-	gsl_matrix * Ap1 = gsl_matrix_alloc (rows,cols) ; FILE* fAp1 = fopen("data/Wavefunction/rvsAP.dat","r")  ;
-	gsl_matrix_fscanf(fAp1, Ap1) ;  fclose(fAp1) ;
+	}
+	gsl_matrix * Ap1 = gsl_matrix_alloc (rows,cols);
+	{
+		FILE* fAp1 = fopen("data/Wavefunction/rvsAP.dat","r")  ;
+		gsl_matrix_fscanf(fAp1, Ap1);
+		fclose(fAp1) ;
 
+	}
 	cout << "Manifold n1 = "<<n1<<" plots of E(R) type are included !\n" ;
 
 
 
-	gsl_matrix * R38s = gsl_matrix_alloc (rows,cols) ; FILE* fR38s  = fopen("data/Wavefunction/rvsR38s.dat","r")  ;
-	gsl_matrix_fscanf(fR38s, R38s)    ; fclose(fR38s) ;
+	gsl_matrix * R38s = gsl_matrix_alloc (rows,cols);
+	{
+		FILE* fR38s  = fopen("data/Wavefunction/rvsR38s.dat","r")  ;
+		gsl_matrix_fscanf(fR38s, R38s);
+		fclose(fR38s) ;
 
-	gsl_matrix * R36d = gsl_matrix_alloc (rows,cols) ; FILE* fR36d  = fopen("data/Wavefunction/rvsR36d.dat","r") ;
-	gsl_matrix_fscanf(fR36d, R36d)    ; fclose(fR36d) ;
+	}
+	gsl_matrix * R36d = gsl_matrix_alloc (rows,cols);
+	{
+		FILE* fR36d  = fopen("data/Wavefunction/rvsR36d.dat","r") ;
+		gsl_matrix_fscanf(fR36d, R36d);
+		fclose(fR36d) ;
+	}
 
-	gsl_matrix * R37p = gsl_matrix_alloc (rows,cols) ; FILE* fR37p  = fopen("data/Wavefunction/rvsR37p.dat","r") ;
-	gsl_matrix_fscanf(fR37p, R37p)    ; fclose(fR37p) ;
+	gsl_matrix * R37p = gsl_matrix_alloc (rows,cols);
+	{
+		FILE* fR37p  = fopen("data/Wavefunction/rvsR37p.dat","r") ;
+		gsl_matrix_fscanf(fR37p, R37p);
+		fclose(fR37p) ;
+	}
 
-	gsl_matrix * DR38s = gsl_matrix_alloc (rows,cols) ; FILE* fDR38s  = fopen("data/Wavefunction/rvsDR38s.dat","r")  ;
-	gsl_matrix_fscanf(fDR38s, DR38s)    ; fclose(fDR38s) ;
+	gsl_matrix * DR38s = gsl_matrix_alloc (rows,cols);
+	{
+		FILE* fDR38s  = fopen("data/Wavefunction/rvsDR38s.dat","r")  ;
+		gsl_matrix_fscanf(fDR38s, DR38s);
+		fclose(fDR38s) ;
+	}
 
-	gsl_matrix * DR36d = gsl_matrix_alloc (rows,cols) ; FILE* fDR36d  = fopen("data/Wavefunction/rvsDR36d.dat","r") ;
-	gsl_matrix_fscanf(fDR36d, DR36d)    ; fclose(fDR36d) ;
+	gsl_matrix * DR36d = gsl_matrix_alloc (rows,cols) ;
+	{
+		FILE* fDR36d  = fopen("data/Wavefunction/rvsDR36d.dat","r") ;
+		gsl_matrix_fscanf(fDR36d, DR36d);
+		fclose(fDR36d) ;
+	}
 
-	gsl_matrix * DR37p = gsl_matrix_alloc (rows,cols) ; FILE* fDR37p  = fopen("data/Wavefunction/rvsDR37p.dat","r") ;
-	gsl_matrix_fscanf(fDR37p, DR37p)    ; fclose(fDR37p) ;
+	gsl_matrix * DR37p = gsl_matrix_alloc (rows,cols) ;
+	{
+		FILE* fDR37p  = fopen("data/Wavefunction/rvsDR37p.dat","r") ;
+		gsl_matrix_fscanf(fDR37p, DR37p);
+		fclose(fDR37p) ;
+	}
 
 
 
@@ -193,7 +225,7 @@ void Trimer_energies_field (int n1,double dc_field_au){
 	cout << "done field matrix trimer full nlm"<< endl;
 
 
-	for(row=297;row<298;row++) {
+	for(row=297;row<rows;row++) {
 
 		row1=row;
 
@@ -208,19 +240,19 @@ void Trimer_energies_field (int n1,double dc_field_au){
 
 		cout<<"Building the Hamiltonian matrix"<<endl;
 
-		for(i = 0; i <= n1-1 ; i++)
+		for(i = 0; i <=n1-1  ; i++)
 		{
 			k1=0;
 			for(k1 = 1 ;k1 <= 2*i+1 ; k1++)
 			{
 				m1=k1-i-1;
 
-				for(j = 0 ; j <= n1-1 ; j++)
+				for(j = 0 ; j <=n1-1 ; j++)
 				{
 
 				// constructing the Hamiltonian  matrix
-				//  cout<<m1<<"\t"<<m2<<"\t"<<gsl_matrix_get(spV,i*i+k1-1,j*j+k2-1)<<endl;
 
+					//Case A
 					if  ((i<3)&&(j<3))
 						{
 
@@ -250,9 +282,11 @@ void Trimer_energies_field (int n1,double dc_field_au){
 
 							k2=0;
 
-							for(k2 = 1; k2 <= 2*j+1 ; k2++){ m2=k2-j-1;
+							for(k2 = 1; k2 <= 2*j+1 ; k2++)
+							{
+								m2=k2-j-1;
 
-							delta_ij=0;
+								delta_ij=0;
 
 							if ((i==j)&&(m1==m2))
 							{
@@ -275,23 +309,23 @@ void Trimer_energies_field (int n1,double dc_field_au){
 							n22 = n1+3-j;
 
 							wave_1   = wave_R;
-							wave1_2  = wave1_R;
+							wave1_2  = 0.;
 
 							Dwave_1  = Dwave_R;
-							Dwave1_2 = Dwave1_R;
+							Dwave1_2 = 0.;
 
 							wave_2   =  wave_R1;
-							wave2_1  =  wave1_R1;
+							wave2_1  =  0.;
 
 							Dwave_2  = Dwave_R1;
-							Dwave2_1 = Dwave1_R1;
+							Dwave2_1 = 0.;
 
 
 							Atom rubidium_mod(n11, i);
-							FermiPotentials fermi_1(s, n11, n12, i, j, m1, m2, R,  theta,  AS,  AP,
-							wave_1, wave1_2, Dwave_1, Dwave1_2);
-							FermiPotentials fermi_2(s, n21, n22, i, j, m1, m2, R1, theta1, AS1, AP1,
-							wave_2, wave2_1, Dwave_2, Dwave2_1);
+
+
+	                        FermiPotentials fermi_1(s, n11, n12, i, j, m1, m2, R,  theta,  AS,wave_1, wave1_2, AP, Dwave_1, Dwave1_2);
+							FermiPotentials fermi_2(s, n21, n22, i, j, m1, m2, R1, theta1, AS1,wave_2, wave2_1, AP1,  Dwave_2, Dwave2_1);
 
 							gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
 							rubidium_mod.E_Rb()*delta_ij +
@@ -302,94 +336,215 @@ void Trimer_energies_field (int n1,double dc_field_au){
 
 							}
 						}
+					//Case B
 
-				/*
+					if  ((i<3)&&(j>2))
+					{
+						if (i==1)
+						{
+							wave_R = gsl_matrix_get(R37p,row,1) ;
+							Dwave_R = gsl_matrix_get(DR37p,row,1) ;
+							wave_R1 = gsl_matrix_get(R37p,row1,1) ;
+							Dwave_R1 = gsl_matrix_get(DR37p,row1,1) ;
+						}
+						if (i==2)
+						{
+							wave_R = gsl_matrix_get(R36d,row,1) ;
+							Dwave_R = gsl_matrix_get(DR36d,row,1) ;
+							wave_R1 = gsl_matrix_get(R36d,row1,1) ;
+							Dwave_R1 = gsl_matrix_get(DR36d,row1,1) ;
+						}
+						if (i==0)
+						{
+							wave_R = gsl_matrix_get(R38s,row,1) ;
+							Dwave_R = gsl_matrix_get(DR38s,row,1) ;
+							wave_R1 = gsl_matrix_get(R38s,row1,1) ;
+							Dwave_R1 = gsl_matrix_get(DR38s,row1,1) ;
+						}
 
-	  if  ((i<3)&&(j>2)) {
-	    if (i==1){
-	      wave_R = gsl_matrix_get(R37p,row,1) ; 	Dwave_R = gsl_matrix_get(DR37p,row,1) ;
-	      wave_R1 = gsl_matrix_get(R37p,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR37p,row1,1) ;}
-	    if (i==2){
-	      wave_R = gsl_matrix_get(R36d,row,1) ; 	Dwave_R = gsl_matrix_get(DR36d,row,1) ;
-	      wave_R1 = gsl_matrix_get(R36d,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR36d,row1,1) ;}
-	    if (i==0){
-	      wave_R = gsl_matrix_get(R38s,row,1) ; 	Dwave_R = gsl_matrix_get(DR38s,row,1) ;
-	      wave_R1 = gsl_matrix_get(R38s,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR38s,row1,1) ; }
+						k2=0;
 
-	    k2=0;
+						for(k2 = 1 ;k2 <= 2*j+1 ; k2++){ m2=k2-j-1;
 
-	    for(k2 = 1 ;k2 <= 2*j+1 ; k2++){ m2=k2-j-1;
+						delta_ij=0;
+						if ((i==j)&&(m1==m2))
+						{
+							delta_ij=1.;
+						}
+						field_contri=0.;
 
-			 delta_ij=0;
-	      if ((i==j)&&(m1==m2)){delta_ij=1.;}
-	      field_contri=0.;
-	      if ((i==j+1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
-	      if ((i==j-1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
+						if ((i==j+1)&&(m1==m2))
+						{
+							field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1);
+						}
+						if ((i==j-1)&&(m1==m2))
+						{
+							field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1);
+						}
 
-	      FermiPotentials fermi_11(s, n1+3-i, n1,i, j, m1, m2, R, theta, AS, AP,wave_R,0., Dwave_R,0.);
-	      FermiPotentials fermi_21(s, n1+3-i, n1,i, j, m1, m2, R1, theta1, AS1, AP1,wave_R1,0., Dwave_R1,0.);
+						n11 = n1+3-i;
+						n21 = n1+3-i;
 
-	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
-			     fermi_11.Vsp()+
-			     fermi_21.Vsp()+field_contri );
-	    }}
+						n12 = n1;
+						n22 = n1;
 
+						wave_1   = wave_R;
+						wave1_2  = 0.;
 
-	  if  ((i>2)&&(j<3)) {
-	    if (j==0){
-	      wave_R = gsl_matrix_get(R38s,row,1) ; 	Dwave_R = gsl_matrix_get(DR38s,row,1) ;
-	      wave_R1 = gsl_matrix_get(R38s,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR38s,row1,1) ;}
-	    if (j==1){
-	      wave_R = gsl_matrix_get(R37p,row,1) ; 	Dwave_R = gsl_matrix_get(DR37p,row,1) ;
-	      wave_R1 = gsl_matrix_get(R37p,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR37p,row1,1) ;}
-	    if (j==2){
-	      wave_R = gsl_matrix_get(R36d,row,1) ; 	Dwave_R = gsl_matrix_get(DR36d,row,1) ;
-	      wave_R1 = gsl_matrix_get(R36d,row1,1) ; 	Dwave_R1 = gsl_matrix_get(DR36d,row1,1) ;
-	    }
+						Dwave_1  = Dwave_R;
+						Dwave1_2 = 0.;
 
+						wave_2   =  wave_R1;
+						wave2_1  =  0.;
 
-	    k2=0;
-
-
-	    for(k2 = 1 ;k2 <= 2*j+1 ; k2++){ m2=k2-j-1;
-
-		  delta_ij=0;
-	      if ((i==j)&&(m1==m2)){delta_ij=1.;}
-	      field_contri=0.;
-	      if ((i==j+1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
-	      if ((i==j-1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
-
-	      FermiPotentials fermi_12(s, n1, n1+3-j,i, j, m1, m2, R, theta, AS, AP, 0.,wave_R,0., Dwave_R);
-	      FermiPotentials fermi_22(s, n1, n1+3-j,i, j, m1, m2, R1, theta1, AS1, AP1,0.,wave_R1,0., Dwave_R1);
-
-
-	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
-			     fermi_12.Vsp() +
-			     fermi_22.Vsp()+field_contri);
-	    }}
+						Dwave_2  = Dwave_R1;
+						Dwave2_1 = 0.;
 
 
-	  if ( (i>lc) && (j>lc)){
-	    k2=0;
+						FermiPotentials fermi_11(s, n11, n12, i, j, m1, m2, R,  theta,  AS,
+								wave_1, wave1_2, AP, Dwave_1, Dwave1_2);
+						FermiPotentials fermi_21(s, n21, n22, i, j, m1, m2, R1, theta1, AS1,
+								wave_2, wave2_1, AP1,  Dwave_2, Dwave2_1);
 
-	  	    for(k2 = 1 ;k2 <= 2*j+1 ; k2++){ m2=k2-j-1;
-	      delta_ij=0;
-	      if ((i==j)&&(m1==m2)){delta_ij=1.; }
+						gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
+								fermi_11.Vsp()+
+								fermi_21.Vsp()+field_contri );
+						}
+					}
 
-	      field_contri=0.;
-	      if ((i==j+1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
-	      if ((i==j-1)&&(m1==m2)){field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1); }
 
-	      Atom rubidium35(n1,lc+1);
+					if  ((i>2)&&(j<3))
+					{
+						if (j==0)
+						{
+							wave_R = gsl_matrix_get(R38s,row,1) ;
+							Dwave_R = gsl_matrix_get(DR38s,row,1) ;
+							wave_R1 = gsl_matrix_get(R38s,row1,1) ;
+							Dwave_R1 = gsl_matrix_get(DR38s,row1,1) ;
+						}
+						if (j==1)
+						{
+							wave_R = gsl_matrix_get(R37p,row,1) ;
+							Dwave_R = gsl_matrix_get(DR37p,row,1) ;
+							wave_R1 = gsl_matrix_get(R37p,row1,1) ;
+							Dwave_R1 = gsl_matrix_get(DR37p,row1,1) ;
+						}
+						if (j==2)
+						{
+							wave_R = gsl_matrix_get(R36d,row,1) ;
+							Dwave_R = gsl_matrix_get(DR36d,row,1) ;
+							wave_R1 = gsl_matrix_get(R36d,row1,1) ;
+							Dwave_R1 = gsl_matrix_get(DR36d,row1,1) ;
+						}
 
-	      FermiPotentials fermi_13(s, n1,n1, i, j, m1, m2, R,  theta, AS, AP,  0., 0., 0., 0.);
-	      FermiPotentials fermi_23(s, n1,n1, i, j, m1, m2, R1, theta1, AS1, AP1, 0., 0., 0., 0.);
+						k2=0;
 
-	      gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1, rubidium35.E_Rb()*delta_ij +
-			     fermi_13.Vsp()+
-			     fermi_23.Vsp()+field_contri) ;
-	    }}
-				 */}
+						for(k2 = 1 ;k2 <= 2*j+1 ; k2++)
+						{
+							m2=k2-j-1;
+							delta_ij=0;
+
+							if ((i==j)&&(m1==m2))
+							{
+								delta_ij=1.;
+							}
+							field_contri=0.;
+
+							if ((i==j+1)&&(m1==m2))
+							{
+								field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1);
+							}
+							if ((i==j-1)&&(m1==m2))
+							{
+								field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1);
+							}
+
+							n11 = n1;
+							n21 = n1;
+
+							n12 = n1+3-j;
+							n22 = n1+3-j;
+
+							wave_1   = 0.;
+							wave1_2  = wave_R;
+
+							Dwave_1  = 0.;
+							Dwave1_2 = Dwave_R;
+
+							wave_2   =  0.;
+							wave2_1  =  wave_R1;
+
+							Dwave_2  = 0.;
+							Dwave2_1 = Dwave_R1;
+
+							FermiPotentials fermi_12(s, n11, n12, i, j, m1, m2, R,  theta,  AS,
+															wave_1, wave1_2, AP, Dwave_1, Dwave1_2);
+							FermiPotentials fermi_22(s, n21, n22, i, j, m1, m2, R1, theta1, AS1,
+															wave_2, wave2_1, AP1,  Dwave_2, Dwave2_1);
+
+							gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1,
+									fermi_12.Vsp() +
+									fermi_22.Vsp()+field_contri);
+						}
+					}
+
+
+					if ( (i>lc) && (j>lc))
+					{
+						k2=0;
+
+						for(k2 = 1 ;k2 <= 2*j+1 ; k2++)
+						{
+							m2=k2-j-1;
+							delta_ij=0;
+
+							if ((i==j)&&(m1==m2))
+							{
+								delta_ij=1.;
+							}
+
+							field_contri=0.;
+
+							if ((i==j+1)&&(m1==m2))
+							{
+								field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1);
+							}
+							if ((i==j-1)&&(m1==m2))
+							{
+								field_contri=gsl_matrix_get(field,i*i+k1-1,j*j+k2-1);
+							}
+
+
+
+							n11 = n1;
+							n21 = n1;
+
+							n12 = n1;
+							n22 = n1;
+
+							wave_1   = 0.;
+							wave1_2  = 0.;
+
+							Dwave_1  = 0.;
+							Dwave1_2 = 0.;
+
+							wave_2   =  0.;
+							wave2_1  =  0.;
+
+							Dwave_2  = 0.;
+							Dwave2_1 = 0.;
+
+							FermiPotentials fermi_13(s, n11, n12, i, j, m1, m2, R,  theta,  AS,
+									wave_1, wave1_2, AP, Dwave_1, Dwave1_2);
+							FermiPotentials fermi_23(s, n21, n22, i, j, m1, m2, R1, theta1, AS1,
+									wave_2, wave2_1, AP1,  Dwave_2, Dwave2_1);
+
+							gsl_matrix_set(spV, i*i+k1-1, j*j+k2-1, rubidium.E_Rb()*delta_ij +
+									fermi_13.Vsp()+
+									fermi_23.Vsp()+field_contri) ;
+						}
+					}
+				}
 			}
 		}
 

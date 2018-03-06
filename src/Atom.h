@@ -9,8 +9,7 @@
 #define ATOM_H_
 
 class Atom {
-private:
-	int n,l;
+
 public:
 	Atom(int n2, int l2);
 
@@ -19,6 +18,9 @@ public:
 	double Angular_dc_field(int l, int l1, int m, int m1);
     
     virtual ~Atom();
+
+private:
+	int n,l;
 };
 
 #endif /* ATOM_H_ */

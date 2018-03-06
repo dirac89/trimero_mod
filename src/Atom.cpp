@@ -19,8 +19,7 @@ Atom::~Atom() {
 }
 
 double Atom::E_Rb(){
-    n=this->n;
-    l=this->l;
+
     double muns_Rb = 3.1311804 + 0.1745312* pow( n - 3.1311804 , -2. ) ;
     double Ens_Rb = -0.5* pow( n - muns_Rb , -2. ) ;     // s non-Degenerated energy
 
