@@ -1,5 +1,6 @@
 import numpy as np
-from math_aux import Spherical, DRnl, DOlm, DPhilm, hydrogenicR
+from laplacian import Spherical, DRnl, DOlm, DPhilm
+from math_aux import hydrogenicR
 
 class FermiPotentials:
     def __init__(self, s, n, n2, li, lj, mi, mj, r1, theta1, As1, wave1, wave2, Ap1, Dwave1, Dwave2):

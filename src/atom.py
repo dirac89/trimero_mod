@@ -1,4 +1,5 @@
 import numpy as np
+from laplacian import *
 from math_aux import *
 
 class Atom:
