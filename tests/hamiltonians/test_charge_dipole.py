@@ -19,7 +19,6 @@ Ejecutar:  poetry run python src/test_charge_dipole.py    (desde raíz)
 """
 
 import time
-import traceback
 
 import numpy as np
 
@@ -33,27 +32,6 @@ from charge_dipole import (
 
 
 # ----------------------------------------------------------------------
-# Harness mínimo (el repo no usa pytest; ver test_basis_enumeration.py)
-# ----------------------------------------------------------------------
-_RESULTS = []
-
-
-def run(name, fn):
-    print("\n" + "=" * 72)
-    print(name)
-    print("=" * 72)
-    t0 = time.perf_counter()
-    try:
-        fn()
-    except Exception:
-        dt = time.perf_counter() - t0
-        traceback.print_exc()
-        print(f"\n  RESULTADO: ✗ FALLO  ({dt:.2f} s)")
-        _RESULTS.append((name, False))
-    else:
-        dt = time.perf_counter() - t0
-        print(f"\n  RESULTADO: ✓ PASA  ({dt:.2f} s)")
-        _RESULTS.append((name, True))
 
 
 # Base compartida por todos los tests (construirla es barato, ~0.1 s)
@@ -272,26 +250,3 @@ def test_1_large_R_limit():
 
 
 # ======================================================================
-if __name__ == "__main__":
-    print("#" * 72)
-    print("# TESTS ANALÍTICOS — H_mol = B·N² - d·F_ryd  (sólo término del ion Rb⁺)")
-    print("# González-Férez, Sadeghpour & Schmelcher, NJP 17, 013021 (2015)")
-    print("#" * 72)
-
-    run("TEST 3 — ⟨N,M_N|B·N²|N,M_N⟩ = B·N(N+1)  (verificación a mano)",
-        test_3_rotational_diagonal_element)
-    run("TEST 4 — regla de selección: el acoplamiento no mezcla M_J",
-        test_4_mj_selection_rule)
-    run("TEST 2 — hermiticidad de H_cd a R intermedio (R=1500 a0)",
-        test_2_hermiticity)
-    run("TEST 1 — límite R->∞: se recupera E_Ryd + B·N(N+1) sin mezcla",
-        test_1_large_R_limit)
-
-    print("\n" + "#" * 72)
-    print("# RESUMEN")
-    print("#" * 72)
-    for name, ok in _RESULTS:
-        print(f"  {'✓ PASA ' if ok else '✗ FALLO'}  {name}")
-    n_ok = sum(1 for _, ok in _RESULTS if ok)
-    print(f"\n  {n_ok}/{len(_RESULTS)} tests pasan")
-    raise SystemExit(0 if n_ok == len(_RESULTS) else 1)

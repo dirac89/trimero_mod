@@ -122,33 +122,64 @@ def verify_block_mj_0(blocks: dict):
     print(f"\nConsistencia: {total_check} == {len(block)} : {'✓' if total_check == len(block) else '✗'}")
 
 
-def test_enumeration():
-    """Test completo."""
-    print("\n" + "=" * 70)
-    print("TEST DE ENUMERACIÓN DE ESTADOS Rb*-KRb")
-    print("=" * 70)
+def _report_enumeration():
+    """Enumeración + informe por pantalla. Helper, no es un test.
 
-    # Enumerar todos los estados
+    Se conserva porque su salida documenta la estructura de bloques; las
+    aserciones viven en los tests de abajo.
+    """
     all_states = enumerate_basis_states(N_max=6)
-    print(f"\nTotal de estados sin restricción M_J: {len(all_states)}")
-    print(f"Esperado: 568 × 49 = {568 * 49}")
-    print(f"Coincide: {'✓ SÍ' if len(all_states) == 568 * 49 else '✗ NO'}")
-
-    # Particionar por M_J
     blocks = block_by_mj(all_states)
-
-    # Estadísticas
     print_statistics(blocks)
-
-    # Verificación M_J=0
     verify_block_mj_0(blocks)
-
     return all_states, blocks
 
 
-if __name__ == "__main__":
-    all_states, blocks = test_enumeration()
+# ----------------------------------------------------------------------
+# Los tres números que el docstring de este módulo declaraba como esperados
+# se comprobaban imprimiendo ✓/✗, sin fallar nunca. Ahora son aserciones.
+# ----------------------------------------------------------------------
+EXPECTED_TOTAL = 568 * 49        # 27832 estados sin restricción de M_J
+EXPECTED_N_BLOCKS = 59           # bloques distintos de M_J
+EXPECTED_MJ0_SIZE = 1016         # estados en el bloque M_J = 0
 
-    print("\n" + "=" * 70)
-    print("Enumeración completada. Estados listos para usar en quantum_basis.py")
-    print("=" * 70)
+
+def test_total_number_of_states():
+    assert len(enumerate_basis_states(N_max=6)) == EXPECTED_TOTAL
+
+
+def test_number_of_mj_blocks():
+    blocks = block_by_mj(enumerate_basis_states(N_max=6))
+    assert len(blocks) == EXPECTED_N_BLOCKS
+
+
+def test_mj_zero_block_size():
+    blocks = block_by_mj(enumerate_basis_states(N_max=6))
+    assert len(blocks[0]) == EXPECTED_MJ0_SIZE
+
+
+def test_blocks_partition_the_full_basis():
+    """Los bloques deben ser una partición: ni pierden ni duplican estados."""
+    states = enumerate_basis_states(N_max=6)
+    blocks = block_by_mj(states)
+    assert sum(len(b) for b in blocks.values()) == len(states)
+    assert len({s for b in blocks.values() for s in b}) == len(states)
+
+
+def test_matches_production_coupled_basis():
+    """La enumeración de referencia y CoupledBasis deben coincidir.
+
+    Es lo que este fichero verificaba de forma implícita: que la clase usada
+    en producción enumera exactamente la misma base que el script.
+    """
+    from quantum_basis import CoupledBasis
+
+    basis = CoupledBasis(N_max=6, manifold_l_min=3)
+    reference = block_by_mj(enumerate_basis_states(N_max=6))
+
+    assert basis.total_dimension() == EXPECTED_TOTAL
+    assert basis.num_blocks() == len(reference)
+    for m_j in basis.block_M_J_values():
+        assert set(basis.get_block(m_j).states) == set(reference[m_j]), (
+            f"el bloque M_J={m_j} difiere de la enumeración de referencia"
+        )

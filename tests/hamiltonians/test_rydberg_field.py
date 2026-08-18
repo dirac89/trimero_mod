@@ -19,7 +19,6 @@ Ejecutar:  poetry run python src/test_rydberg_field.py
 """
 
 import time
-import traceback
 
 import numpy as np
 from scipy.special import gammaln, lpmv, roots_legendre
@@ -35,23 +34,6 @@ from charge_dipole import (
 from quantum_basis import CoupledBasis
 from rydberg_radial import RadialBasis
 
-_RESULTS = []
-
-
-def run(name, fn):
-    print("\n" + "=" * 72)
-    print(name)
-    print("=" * 72)
-    t0 = time.perf_counter()
-    try:
-        fn()
-    except Exception:
-        traceback.print_exc()
-        print(f"\n  RESULTADO: ✗ FALLO  ({time.perf_counter() - t0:.2f} s)")
-        _RESULTS.append((name, False))
-    else:
-        print(f"\n  RESULTADO: ✓ PASA  ({time.perf_counter() - t0:.2f} s)")
-        _RESULTS.append((name, True))
 
 
 # ======================================================================
@@ -472,25 +454,3 @@ def test_1_large_R_both_terms():
 
 
 # ======================================================================
-if __name__ == "__main__":
-    print("#" * 72)
-    print("# TESTS — campo del ELECTRÓN Rydberg en F_ryd  (Ec. 4, 2º término)")
-    print("#" * 72)
-    run("TEST 0a — álgebra angular (3j, Gaunt) contra valores analíticos", test_0a_angular_algebra)
-    run("TEST 0b — base radial: normalización y ⟨r⟩ exacto", test_0b_radial_basis)
-    run("TEST 0c — cierre con la ronda 1: cos(θ_d) vía Gaunt == ronda 1", test_0c_rotor_matches_round1)
-    run("TEST 6 — expansión multipolar vs CUADRATURA 2D BRUTA", test_6_expansion_vs_brute_force)
-    run("TEST 3 — M_J conservado con ΔM_N ≠ 0", test_3_mj_conserved_mn_not)
-    run("TEST 2 — hermiticidad con ambos términos (R=1500 a0)", test_2_hermiticity_both_terms)
-    run("TEST 4 — límite dipolar de primer orden en r/R", test_4_first_order_dipole_limit)
-    run("TEST 5 — el monopolo del electrón cancela el campo del ion", test_5_monopole_cancels_ion)
-    run("TEST 1 — límite R→∞ con ambos términos", test_1_large_R_both_terms)
-
-    print("\n" + "#" * 72)
-    print("# RESUMEN")
-    print("#" * 72)
-    for name, ok in _RESULTS:
-        print(f"  {'✓ PASA ' if ok else '✗ FALLO'}  {name}")
-    n_ok = sum(1 for _, ok in _RESULTS if ok)
-    print(f"\n  {n_ok}/{len(_RESULTS)} tests pasan")
-    raise SystemExit(0 if n_ok == len(_RESULTS) else 1)
