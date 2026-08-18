@@ -55,6 +55,34 @@ GHz contiene MHz**.
 Aparte, `...729` frente a `...502` son revisiones CODATA distintas (diferencia
 relativa ~3e-11, numéricamente irrelevante, pero delata que nadie las comparó).
 
+### Bug de asimetría en la matriz de campo DC (hallado en el paso 0)
+
+Descubierto al generar el golden G3, no durante el diseño. En
+`Trimer_energies_field`, la matriz `field` se construye con:
+
+```python
+for i in range(n1 - 1):        # i llega sólo hasta n1-2
+    for k1 in range(1, 2 * i + 2):
+        for j in range(n1):    # j llega hasta n1-1
+```
+
+El par `(i=n1-1, j=n1-2)` nunca se rellena, mientras que `(i=n1-2, j=n1-1)`
+sí. El acoplamiento Stark entre las dos últimas capas `l` queda por tanto sólo
+en el triángulo superior de `spV`.
+
+Como `np.linalg.eigh` lee por defecto el triángulo **inferior** (`UPLO='L'`),
+ese acoplamiento **se descarta silenciosamente**: los autovalores se calculan
+como si no existiera. Medido a `n1=5, dc=0.1`: 14 elementos asimétricos,
+todos confinados a los bloques `(l=3, l=4)`, con magnitud 60.85.
+
+Sin campo DC (`dc=0`) la matriz sí es exactamente simétrica, porque `field` es
+idénticamente nula y la asimetría no llega a materializarse.
+
+El golden G3 congela el bug tal cual (`test_g3_spv_asymmetry_is_the_known_legacy_bug`),
+de modo que corregirlo obligue a regenerar el golden de forma consciente.
+**La corrección está propuesta como paso 4b y requiere decisión del autor**,
+por ser un cambio de física y no de estructura.
+
 ### Coste computacional (medido)
 
 ```
@@ -324,9 +352,20 @@ máquina.
 ramas de `Vs`/`Vp` a una sola expresión sigue dando el mismo número en las cuatro
 combinaciones de `li/lj`.
 
-Los goldens se generan a `n1=5` (2.5 s/fila), no a 35. Con `n1=5` el `max_dim`
-es 25 y las cuatro ramas `i<3/j<3`, `i<3/j>2`, `i>2/j<3`, `i>2/j>2` se visitan
-todas: la cobertura estructural no depende de `n1` grande.
+Los goldens se generan a `n1=5`, no a 35. Con `n1=5` el `max_dim` es 25 y las
+cuatro ramas `i<3/j<3`, `i<3/j>2`, `i>2/j<3`, `i>2/j>2` se visitan todas: la
+cobertura estructural no depende de `n1` grande.
+
+Coste real medido en el paso 0: un run completo de 479 filas a `n1=5` tarda
+**213 s** (no los ~20 min estimados; con `n1=5` muchos pares caen en la rama
+tabulada, más barata que la hidrogénica). Los cuatro goldens ocupan 56 KB en
+total, así que se versionan en git sin reparos.
+
+G2 incluye `(mi, mj) = (0, 0)` a propósito: con `m != 0` los armónicos se
+anulan en θ=0 y θ=π, que son exactamente los dos ángulos que usa `trimer.py`
+(`theta=0`, `theta1=pi`). Sin el caso `m=0`, `Vs` valdría cero en dos tercios
+de los casos y el golden vigilaría ceros triviales. `test_g2_covers_all_four_branches`
+comprueba que cada rama aporta valores no nulos.
 
 ### Tests existentes
 
@@ -348,6 +387,7 @@ siguiente.
 | 2 | Crear `src/trimero/`, mover módulos, arreglar imports | 14/14 + G1–G4 |
 | 3 | Eliminar `laplacian.py`; imports explícitos | 14/14 + G1–G4 |
 | 4 | `constants.py` y **arreglo del bug de unidades** | G1–G3 intactos; G4-au intacto; **G4-GHz cambia ×1000** |
+| 4b | **Arreglo de la asimetría de `field`** (`range(n1-1)` -> `range(n1)`); pendiente de decisión | G1–G2 intactos; **G3 y G4 cambian en los casos con dc != 0** |
 | 5 | `lru_cache` en `genlaguerre` | G1–G4 bit a bit + speedup medido |
 | 6 | ABC `Hamiltonian`; `ChargeDipole` sólo declara el override | 14/14, incluido el `np.array_equal` de regresión |
 | 7 | `WavefunctionSource`; colapsar las 8 ramas de Fermi | **G2** |
