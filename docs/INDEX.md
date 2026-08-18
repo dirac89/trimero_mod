@@ -40,6 +40,7 @@ Este directorio contiene toda la documentación de investigación, análisis te�
 | `analysis_procedencia_rvsAS_rvsAP.md` | ⚠️ Punto abierto: procedencia de los `.dat` de entrada |
 | `analysis_validacion_carga_dipolo.md` | `B·N²` + campo del ion Rb⁺: derivación, 4 tests analíticos, escalado 1/R⁴ |
 | `analysis_campo_electron_rydberg.md` | Campo del electrón Rydberg (Ec. A.6-A.10): expansión multipolar, 9 tests, validación contra cuadratura 2D, dominancia frente al ion |
+| `superpowers/specs/2026-08-18-refactor-estructura-design.md` | Diseño del refactor a paquete `trimero`: capas, ABC `Hamiltonian`, goldens y plan de 11 pasos. Incluye dos hallazgos medidos: bug de unidades ×1000 en `EhtoGHz` y coste de 34 días para `n1=35` |
 
 ---
 
