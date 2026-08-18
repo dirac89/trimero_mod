@@ -172,7 +172,7 @@ def test_matches_production_coupled_basis():
     Es lo que este fichero verificaba de forma implícita: que la clase usada
     en producción enumera exactamente la misma base que el script.
     """
-    from quantum_basis import CoupledBasis
+    from trimero.basis.quantum import CoupledBasis
 
     basis = CoupledBasis(N_max=6, manifold_l_min=3)
     reference = block_by_mj(enumerate_basis_states(N_max=6))

@@ -39,10 +39,10 @@ from typing import List, Sequence, Tuple
 
 import numpy as np
 
-from angular_algebra import gaunt
-from atom import Atom
-from quantum_basis import QuantumBasisBlock
-from rydberg_radial import RadialBasis
+from trimero.mathlib.angular import gaunt
+from trimero.systems.atom import Atom
+from trimero.basis.quantum import QuantumBasisBlock
+from trimero.basis.radial import RadialBasis
 
 __all__ = [
     "HZ_PER_HARTREE",

@@ -12,14 +12,14 @@ Ejecutar:  poetry run python src/run_charge_dipole_block.py
 
 import numpy as np
 
-from charge_dipole import (
+from trimero.hamiltonians.charge_dipole import (
     B_KRB_AU,
     D_KRB_AU,
     HZ_PER_HARTREE,
     ChargeDipoleHamiltonian,
     rydberg_diagonal,
 )
-from quantum_basis import CoupledBasis
+from trimero.basis.quantum import CoupledBasis
 
 EH_TO_GHZ = HZ_PER_HARTREE / 1.0e9
 

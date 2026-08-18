@@ -27,7 +27,7 @@ RTOL = 1e-12
 
 def _run_legacy(dc_field_au, n1=5):
     """Ejecuta el legado en un directorio limpio y devuelve sus dos salidas."""
-    from trimer import Trimer_energies_field
+    from trimero.hamiltonians.trimer import Trimer_energies_field
 
     cwd = Path.cwd()
     with tempfile.TemporaryDirectory() as tmp:

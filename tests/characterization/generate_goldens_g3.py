@@ -26,8 +26,8 @@ GOLDENS = Path(__file__).resolve().parent / "goldens"
 N1 = 5           # dim = 25; visita las 4 ramas i<3/i>2 x j<3/j>2
 N_ROWS = 2       # filas 297 y 298 del bucle
 
-import atom  # noqa: E402
-import trimer  # noqa: E402
+from trimero.systems import atom  # noqa: E402
+from trimero.hamiltonians import trimer  # noqa: E402
 
 
 class _EnoughRows(Exception):

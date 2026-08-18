@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
-from fermi_potentials import FermiPotentials
+from trimero.hamiltonians.fermi import FermiPotentials
 
 GOLDEN = Path(__file__).resolve().parent / "goldens" / "g2_fermi.npz"
 ORDER = ["Ap1", "As1", "Dwave1", "Dwave2", "li", "lj", "mi", "mj",

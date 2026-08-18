@@ -1,6 +1,6 @@
 import numpy as np
-from laplacian import *
-from math_aux import *
+from trimero.mathlib.laplacian import *
+from trimero.mathlib.special import *
 
 class Atom:
     def __init__(self, n2, l2):

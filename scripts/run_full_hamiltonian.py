@@ -15,7 +15,7 @@ import time
 
 import numpy as np
 
-from charge_dipole import (
+from trimero.hamiltonians.charge_dipole import (
     B_KRB_AU,
     D_KRB_AU,
     HZ_PER_HARTREE,
@@ -23,8 +23,8 @@ from charge_dipole import (
     RydbergElectronField,
     rydberg_diagonal,
 )
-from quantum_basis import CoupledBasis
-from rydberg_radial import RadialBasis
+from trimero.basis.quantum import CoupledBasis
+from trimero.basis.radial import RadialBasis
 
 EH_TO_GHZ = HZ_PER_HARTREE / 1.0e9
 EH_TO_MHZ = HZ_PER_HARTREE / 1.0e6

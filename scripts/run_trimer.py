@@ -1,7 +1,7 @@
 import numpy as np
-from atom import Atom
-from fermi_potentials import FermiPotentials
-from trimer import Trimer_energies_field
+from trimero.systems.atom import Atom
+from trimero.hamiltonians.fermi import FermiPotentials
+from trimero.hamiltonians.trimer import Trimer_energies_field
 
 # Parámetros globales (deben definirse según el caso)
 pqn = 35  # Ejemplo, ajustar según necesidad

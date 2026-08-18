@@ -22,8 +22,8 @@ import time
 
 import numpy as np
 
-from quantum_basis import CoupledBasis
-from charge_dipole import (
+from trimero.basis.quantum import CoupledBasis
+from trimero.hamiltonians.charge_dipole import (
     B_KRB_AU,
     D_KRB_AU,
     ChargeDipoleHamiltonian,

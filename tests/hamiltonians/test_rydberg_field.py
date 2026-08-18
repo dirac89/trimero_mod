@@ -23,16 +23,16 @@ import time
 import numpy as np
 from scipy.special import gammaln, lpmv, roots_legendre
 
-from angular_algebra import gaunt, wigner_3j
-from charge_dipole import (
+from trimero.mathlib.angular import gaunt, wigner_3j
+from trimero.hamiltonians.charge_dipole import (
     B_KRB_AU,
     D_KRB_AU,
     ChargeDipoleHamiltonian,
     RydbergElectronField,
     rydberg_diagonal,
 )
-from quantum_basis import CoupledBasis
-from rydberg_radial import RadialBasis
+from trimero.basis.quantum import CoupledBasis
+from trimero.basis.radial import RadialBasis
 
 
 

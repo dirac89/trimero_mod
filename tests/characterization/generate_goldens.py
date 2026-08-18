@@ -20,8 +20,8 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 GOLDENS = Path(__file__).resolve().parent / "goldens"
 
-from math_aux import Spherical, DRnl, DOlm, DPhilm, hydrogenicR  # noqa: E402
-from fermi_potentials import FermiPotentials  # noqa: E402
+from trimero.mathlib.special import Spherical, DRnl, DOlm, DPhilm, hydrogenicR  # noqa: E402
+from trimero.hamiltonians.fermi import FermiPotentials  # noqa: E402
 
 
 # --- G1: funciones especiales puras -----------------------------------

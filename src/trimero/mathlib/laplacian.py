@@ -1,4 +1,4 @@
-from math_aux import Spherical, DRnl, DOlm, DPhilm
+from trimero.mathlib.special import Spherical, DRnl, DOlm, DPhilm
 
 __all__ = [
     "Spherical",

@@ -1,6 +1,6 @@
 import numpy as np
-from atom import Atom
-from fermi_potentials import FermiPotentials
+from trimero.systems.atom import Atom
+from trimero.hamiltonians.fermi import FermiPotentials
 
 def Trimer_energies_field(n1, dc_field_au):
     rubidium = Atom(n1, 0)  # oqn no está definido, ajustar si es necesario

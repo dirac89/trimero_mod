@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from math_aux import Spherical, DRnl, DOlm, DPhilm, hydrogenicR
+from trimero.mathlib.special import Spherical, DRnl, DOlm, DPhilm, hydrogenicR
 
 GOLDEN = Path(__file__).resolve().parent / "goldens" / "g1_special.npz"
 
