@@ -13,7 +13,7 @@ def Trimer_energies_field(n1, dc_field_au):
     EhtoGHz = 6.579683920729e9  # Ajustar si es necesario
 
     # Leer matrices desde archivos (rutas y nombres corregidos y consistentes)
-    data_dir = "trimero_mod/data/Wavefunction/"
+    data_dir = "data/Wavefunction/"
     print("Cargando archivos de datos...")
     As = np.loadtxt(data_dir + "rvsAS.dat"); print("Cargado rvsAS.dat")
     Ap = np.loadtxt(data_dir + "rvsAP.dat"); print("Cargado rvsAP.dat")

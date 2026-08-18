@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.special import lpmv, sph_harm, factorial, genlaguerre, gammaln
+from scipy.special import lpmv, factorial, genlaguerre, gammaln
 
 # Spherical harmonics (solo parte asociada de Legendre, normalización)
 def Spherical(l, m, x1):
