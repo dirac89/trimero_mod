@@ -41,6 +41,7 @@ import numpy as np
 
 from trimero.mathlib.angular import gaunt
 from trimero.systems.atom import Atom
+from trimero.systems.rb_defects import energy_rb
 from trimero.basis.quantum import QuantumBasisBlock
 from trimero.basis.radial import RadialBasis
 
@@ -374,7 +375,8 @@ class ChargeDipoleHamiltonian:
 
 # --- H_a: energías Rydberg (diagonal) ---------------------------------
 def rydberg_diagonal(
-    block: QuantumBasisBlock, n_manifold: int = 24, n_s: int = 27
+    block: QuantumBasisBlock, n_manifold: int = 24, n_s: int = 27,
+    delta0_ns: float = None,
 ) -> np.ndarray:
     """
     Diagonal de H_a en el orden del bloque: energías del Rb* sin perturbar.
@@ -382,6 +384,10 @@ def rydberg_diagonal(
     Manifold cuasi-degenerado n=24, l≥3, más el estado vecino 27s (l=0),
     tal como se usa en González-Férez 2015. Las energías salen de
     `atom.Atom.E_Rb()` (defectos cuánticos), no se duplican aquí.
+
+    `delta0_ns` permite usar el δ₀(ns) que reproduce la Tabla I de
+    González-Férez 2015 en vez del de `atom.py` (ver systems/rb_defects.py).
+    Con None, el resultado es idéntico al de antes.
 
     NOTA: esto es el H_a *libre*. El pseudopotencial de Fermi Rydberg-KRb
     (fermi_potentials.py) no está incluido en esta ronda.
@@ -391,6 +397,8 @@ def rydberg_diagonal(
     for k, (l, _, _, _) in enumerate(block.states):
         if l not in cache:
             n = n_s if l == 0 else n_manifold
-            cache[l] = Atom(n, l).E_Rb()
+            # delta0_ns=None -> energy_rb delega en Atom.E_Rb() sin cambios.
+            # Ver systems/rb_defects.py para por qué existe el override.
+            cache[l] = energy_rb(n, l, delta0_ns)
         out[k] = cache[l]
     return out

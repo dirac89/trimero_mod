@@ -39,6 +39,10 @@ Este directorio contiene toda la documentación de investigación, análisis te�
 | `DISEÑO_HAMILTONIANO_KRBC.md` / `_v2.md` | Diseño del Hamiltoniano Rb*-KRb; base acoplada y bloqueo por M_J |
 | `analysis_procedencia_rvsAS_rvsAP.md` | ⚠️ Punto abierto: procedencia de los `.dat` de entrada |
 | `analysis_validacion_carga_dipolo.md` | `B·N²` + campo del ion Rb⁺: derivación, 4 tests analíticos, escalado 1/R⁴ |
+| `analysis_resonancia_onda_p.md` | Resonancia de forma p: posición confirmada (24.8 vs 23 meV) pero el pozo de −6.5 THz es artefacto de interpolar sobre un hueco de malla |
+| `analysis_curva_bop_MJ0.md` | ⚠️ Curva BOP M_J=0: seguimiento adiabático vs diabático, y un butterfly de onda p a −6.5 THz sin explicar |
+| `analysis_verificacion_tabla_I.md` | ⚠️ Tabla I del paper: 6/8 niveles concuerdan a ±0.004 GHz; sistemático real de 0.3 GHz en la serie s, localizado en δ₀(ns) |
+| `analysis_pseudopotencial_fermi_krb.md` | Pseudopotencial de Fermi s+p, remapeo k(R), dominancia frente al carga-dipolo |
 | `analysis_campo_electron_rydberg.md` | Campo del electrón Rydberg (Ec. A.6-A.10): expansión multipolar, 9 tests, validación contra cuadratura 2D, dominancia frente al ion |
 | `superpowers/specs/2026-08-18-refactor-estructura-design.md` | Diseño del refactor a paquete `trimero`: capas, ABC `Hamiltonian`, goldens y plan de 11 pasos. Incluye dos hallazgos medidos: bug de unidades ×1000 en `EhtoGHz` y coste de 34 días para `n1=35` |
 
