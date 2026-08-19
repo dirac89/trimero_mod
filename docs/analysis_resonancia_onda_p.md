@@ -1,5 +1,12 @@
 # La resonancia de forma de onda p: ¿física o artefacto de la tabla?
 
+> ⚠️ **CORREGIDO por `analysis_interpolacion_polo_Ap.md` (2026-08-19).** La
+> conclusión 2 del resumen y la §6.2 —«la profundidad de −6472 GHz es un
+> artefacto de interpolación»— son **incorrectas**. Sólo lo era el valor en ese
+> punto de malla concreto; nodos tabulados genuinos (R=566, 568, 570 a₀) dan
+> pozos igual de profundos. La causa real es la divergencia del pseudopotencial
+> de rango cero en la resonancia.
+
 **Fecha**: 2026-08-19
 **Autor**: Javier Aguilera
 **Relevancia**: La curva BOP de M_J=0 tiene un pozo de −6.5 THz en R≈565 a₀, dos
