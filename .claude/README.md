@@ -12,9 +12,9 @@ Directorio de configuración específica del proyecto para Claude Code.
   - Preguntas frecuentes
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — Documentación de arquitectura
-  - Capas del sistema: Datos, Física, Simulación, I/O, Control
-  - Flujo de ejecución y dependencias
-  - Puntos de extensión y optimización
+  - **Los dos sistemas físicos y por qué están separados**
+  - Capas, grafo real de dependencias, invariantes
+  - Deuda técnica conocida y puntos de extensión
 
 - **[settings.json](settings.json)** — Configuración de Claude Code
   - Modelo de IA preferido
@@ -34,9 +34,14 @@ Ubicadas en `skills/`:
 
 ## Cómo Usar
 
-1. **Para entender el proyecto**:
-   - Lee [CLAUDE.md](CLAUDE.md) (reglas y flujo)
-   - Lee [ARCHITECTURE.md](ARCHITECTURE.md) (diseño técnico)
+1. **Para entender el proyecto** (en este orden):
+   - [`docs/STATUS.md`](../docs/STATUS.md) — la física vigente. **Empieza aquí.**
+   - [ARCHITECTURE.md](ARCHITECTURE.md) — el código y sus fronteras
+   - [CLAUDE.md](CLAUDE.md) — reglas de desarrollo
+
+   ⚠️ El repositorio cubre **dos sistemas físicos distintos** (Rb*-KRb polar y
+   perturbador neutro). Confundirlos ya costó varias rondas de trabajo con
+   premisa equivocada.
 
 2. **Para ejecutar simulaciones**:
    - Usa `/run-simulation` con parámetros específicos
@@ -59,16 +64,21 @@ trimero_mod/
 │       ├── run-simulation/
 │       ├── quick-test/
 │       └── physics-review/
-├── src/
-│   ├── main.py
-│   ├── trimer.py
-│   ├── atom.py
-│   ├── fermi_potentials.py
-│   ├── math_aux.py
-│   └── laplacian.py
-├── data/
-│   └── Wavefunction/                 # Archivos de entrada
-├── README.md                         # Documentación general del proyecto
+├── src/trimero/
+│   ├── mathlib/                      # primitivas matemáticas
+│   ├── basis/                        # CoupledBasis, RadialBasis (compartido)
+│   ├── simulation/                   # trace_curve
+│   └── systems/
+│       ├── rb_atom.py                # defectos cuánticos de Rb (compartido)
+│       ├── rb_krb_polar/             # ← sistema VIGENTE
+│       └── rb_neutral_perturber/     # ← el otro sistema, congelado
+├── scripts/compute_bop_curve.py      # único script de producción
+├── scripts/archive/                  # los 12 de exploración
+├── tests/{basis,systems}/            # 48 tests
+├── data/Wavefunction/                # Archivos de entrada
+├── docs/STATUS.md                    # ← la física vigente, en una página
+├── docs/archive/                     # material del otro sistema
+├── plots/                            # sólo lo vigente
 ├── pyproject.toml                    # Dependencias (Poetry)
 └── ...
 ```
@@ -76,10 +86,10 @@ trimero_mod/
 ## Próximos Pasos
 
 ✓ Configuración completada  
-→ Lee [CLAUDE.md](CLAUDE.md) para entender las reglas  
-→ Usa `/quick-test` para validar el proyecto  
-→ Usa `/run-simulation` para tu primer cálculo  
+→ Lee [`docs/STATUS.md`](../docs/STATUS.md) para saber qué es lo vigente  
+→ `poetry run pytest -m "not slow"` para validar el proyecto (~25 s)  
+→ `poetry run python scripts/compute_bop_curve.py --n-manifold 25 --mj 0` para tu primer cálculo  
 
 ---
 
-**Última actualización**: 2026-08-18
+**Última actualización**: 2026-08-20

@@ -6,7 +6,7 @@ description: Ejecuta la simulación del trimero con parámetros configurables
 # Skill: run-simulation
 
 ## Propósito
-Ejecutar `Trimer_energies_field()` con parámetros específicos de física.
+Ejecutar un barrido con parámetros específicos de física, en el sistema correcto.
 
 ## Trigger
 - Usuario dice: "ejecuta la simulación", "run simulation con...", "simula con n1=X"
@@ -27,20 +27,25 @@ Solicita al usuario (si no están claros en la solicitud):
    - Archivos de derivadas: `rvsDR*.dat`
    - `exp_val_r.txt`
 
-2. Llama:
-   ```bash
-   poetry run python src/main.py
-   ```
-   (asumiendo parámetros en `src/main.py`)
+2. **Decide primero de qué sistema físico se trata** (ver `.claude/ARCHITECTURE.md`):
 
-   O crea un script temporal que llama:
+   **Rb*-KRb polar — el camino VIGENTE**:
+   ```bash
+   poetry run python scripts/compute_bop_curve.py \
+       --n-manifold 25 --mj 0 1 --rmin 400 --rmax 1800 --step 5
+   ```
+   Los `.dat` de `data/Wavefunction/` NO hacen falta aquí: este sistema no usa
+   longitudes de dispersión.
+
+   **Perturbador neutro — camino legado, congelado**:
    ```python
-   from src.trimer import Trimer_energies_field
-   Trimer_energies_field(n1=..., dc_field_au=..., ...)
+   from trimero.systems.rb_neutral_perturber.trimer import Trimer_energies_field
+   Trimer_energies_field(n1=..., dc_field_au=...)
    ```
 
 3. Monitorea la ejecución y reporta:
-   - Archivos generados (ej: `Trimer_R_sp_wave_N35_R_300_GHz.dat`)
+   - Archivos generados (`plots/fig1_ad_MJ*_n*.npz` + PNG, o
+     `Trimer_R_sp_wave_*.dat` en el legado)
    - Número de puntos computados
    - Rango de energías resultantes
 

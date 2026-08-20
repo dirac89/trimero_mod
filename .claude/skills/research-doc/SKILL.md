@@ -98,7 +98,7 @@ H = H_0 + V_{int}
 
 **Fecha**: 2026-08-18  
 **Autor**: Javier Aguilera  
-**Relevancia**: Base teórica de FermiPotentials() en src/fermi_potentials.py  
+**Relevancia**: Base teórica de FermiPotentials() en src/trimero/systems/rb_neutral_perturber/fermi_potentials.py  
 **Tipo**: research  
 
 ## Resumen

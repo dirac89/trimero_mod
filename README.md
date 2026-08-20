@@ -1,124 +1,120 @@
-# Proyecto Trimero (Migración a Python)
+# trimero_mod
 
-Este proyecto simula la física de un trimero atómico usando potenciales de Fermi y diagonalización de matrices Hamiltonianas. Originalmente desarrollado en C++, ha sido completamente migrado a Python para facilitar su uso, mantenimiento y extensión.
+Estructura electrónica de **moléculas Rydberg de largo alcance**: un átomo de Rb
+en estado Rydberg perturbado por un compañero, resuelta por diagonalización del
+Hamiltoniano en una base acoplada. Originalmente C++, migrado a Python.
 
-## Estructura del Proyecto
+> **Empieza por [`docs/STATUS.md`](docs/STATUS.md)** — la física vigente en una
+> página. Para el código, [`.claude/ARCHITECTURE.md`](.claude/ARCHITECTURE.md).
+
+## ⚠️ Este repositorio cubre DOS sistemas físicos distintos
+
+Es lo primero que hay que saber. Estuvieron mezclados en el mismo espacio de
+nombres hasta la reorganización del 2026-08-20, y esa mezcla produjo varias
+rondas de trabajo con premisa equivocada.
+
+| | `rb_krb_polar` | `rb_neutral_perturber` |
+|---|---|---|
+| perturbador | KRb, **polar** | átomo/molécula **neutra** |
+| interacción | carga-dipolo, `−d·F_ryd` | dispersión de contacto (pseudopotencial de Fermi) |
+| Hamiltoniano | `H_ad = H_A + H_mol` | `H = H_a + V_Fermi` |
+| referencia | Aguilera-Fernández 2015 / González-Férez 2015 | Aguilera-Fernández 2016 |
+| estado | **vigente** | verde y congelado, línea en pausa |
+
+**El pseudopotencial de Fermi no interviene en el sistema polar.** Si te ves
+añadiendo `V_Fermi` a una curva de Rb\*-KRb, para y lee `docs/STATUS.md`.
+
+## Estructura
 
 ```
-trimero_mod/
-├── pyproject.toml         # Configuración de Poetry y dependencias
-├── README.md              # Este archivo
-├── data/
-│   └── Wavefunction/      # Archivos de datos necesarios para la simulación
-└── src/
-    ├── atom.py
-    ├── fermi_potentials.py
-    ├── laplacian.py
-    ├── math_aux.py
-    ├── main.py
-    └── trimer.py
+src/trimero/
+├── mathlib/          angular.py (3j/Gaunt), special.py, laplacian.py
+├── basis/            quantum.py (CoupledBasis), radial.py (RadialBasis)
+├── simulation/       bop_tracking.py (trace_curve)
+└── systems/
+    ├── rb_atom.py                 Atom.E_Rb() — defectos cuánticos, COMPARTIDO
+    ├── rb_krb_polar/              charge_dipole.py, bop_system.py, rb_defects.py
+    └── rb_neutral_perturber/      fermi_krb.py, fermi_potentials.py, trimer.py
+
+scripts/compute_bop_curve.py       único script de producción
+scripts/archive/                   los 12 scripts de exploración
+tests/{basis,systems}/             48 tests
+data/Wavefunction/                 .dat de entrada (sólo los usa el perturbador neutro)
+docs/                              referencia activa + STATUS.md
+docs/archive/                      material del otro sistema
+plots/                             sólo lo vigente; el resto en plots/archive/
+graphify-out/                      grafo de conocimiento del repositorio
 ```
 
-## Dependencias
+## Instalación y uso
 
-- Python >= 3.11
-- numpy
-- scipy
-- poetry (para gestión de entorno y dependencias)
-
-Instala las dependencias y crea el entorno virtual con:
 ```sh
 poetry install
 ```
 
-## Descripción de los módulos principales
+**Curvas BOP de Rb\*-KRb** — el camino vigente:
 
-- **src/main.py**: Punto de entrada del proyecto. Llama a la función principal de simulación y permite ejecutar pruebas rápidas.
-- **src/trimer.py**: Implementa la función principal `Trimer_energies_field`, que realiza la simulación física, lee los datos, construye y diagonaliza la matriz Hamiltoniana, y guarda los resultados.
-- **src/atom.py**: Implementa la clase `Atom`, que encapsula la física atómica relevante.
-- **src/fermi_potentials.py**: Implementa la clase `FermiPotentials`, que calcula los potenciales de Fermi para la simulación.
-- **src/math_aux.py**: Contiene funciones matemáticas especiales (armónicos esféricos, derivadas radiales, etc.) necesarias para los cálculos físicos.
-- **src/laplacian.py**: Expone las funciones matemáticas principales de `math_aux.py` para mantener una interfaz modular.
-
-## Archivos de datos
-
-Todos los archivos de datos necesarios para la simulación deben estar en `data/Wavefunction/`. Ejemplo de archivos requeridos:
-- rvsAS.dat
-- rvsAP.dat
-- rvsR38s.dat
-- rvsR36d.dat
-- rvsR37p.dat
-- rvsDR38s.dat
-- rvsDR36d.dat
-- rvsDR37p.dat
-- exp_val_r.txt
-
-## Ejecución del proyecto
-
-Desde el directorio raíz del proyecto (`trimero_mod/`), ejecuta:
 ```sh
-poetry run python src/main.py
+poetry run python scripts/compute_bop_curve.py --n-manifold 25 --mj 0 1
 ```
-Esto ejecutará la simulación principal con los parámetros definidos en `src/main.py`.
 
-### Ejemplo de prueba rápida
-En `src/main.py` hay una función de prueba que ejecuta la simulación con parámetros pequeños para validar el flujo:
+Opciones: `--n-manifold`, `--mj`, `--rmin/--rmax/--step`, `--weight`,
+`--no-plot`, `--reuse`. Escribe `plots/fig1_ad_MJ<..>_n<n>.npz` y su PNG.
+Un barrido completo (281 puntos) tarda ~5 min: cada punto es una
+diagonalización de 1113×1113.
+
+**Camino legado** (perturbador neutro, congelado):
+
 ```python
-def test_trimer_energies_field():
-    ...
+from trimero.systems.rb_neutral_perturber.trimer import Trimer_energies_field
+Trimer_energies_field(n1=5, dc_field_au=0.1)
 ```
-Puedes descomentar la llamada a esta función para probar el flujo con `n1=5` y `dc_field_au=0.1`.
 
-## Flujo principal del código
-1. **Carga de datos**: Se leen todos los archivos de datos necesarios usando `numpy`.
-2. **Construcción de la matriz de campo**: Se calcula la matriz de interacción de campo eléctrico.
-3. **Bucle principal**: Para cada posición radial relevante, se construye la matriz Hamiltoniana usando la lógica de casos físicos (A, B, C, D), se diagonaliza y se guardan los autovalores.
-4. **Salida**: Los resultados se guardan en archivos `.dat` en el directorio de ejecución.
+Necesita los `.dat` de `data/Wavefunction/` (`rvsAS.dat`, `rvsAP.dat`,
+`rvsR38s.dat`, `rvsR36d.dat`, `rvsR37p.dat`, sus derivadas `rvsDR*.dat` y
+`exp_val_r.txt`). Produce `Trimer_R_sp_wave_*.dat` con `R` y los autovalores.
 
-## Ejemplo de resultados
+## Tests
 
-Tras la ejecución, se generan archivos como:
-- `Trimer_R_sp_wave_N35_R_300_GHz.dat`
-- `Trimer_R_sp_wave_N35_R_300_au.dat`
-
-Cada línea de estos archivos contiene el valor de R y los autovalores de la matriz Hamiltoniana para ese punto, por ejemplo:
+```sh
+poetry run pytest -m "not slow"    # 45 tests, ~25 s — mientras iteras
+poetry run pytest                  # 48 tests, ~6 min — antes de commitear
 ```
-1.234567890123456	-0.000123	-0.000456	...
-1.345678901234567	-0.000234	-0.000567	...
-...
-```
-Puedes analizar estos archivos con Python, Excel, gnuplot, etc.
 
-## Trazabilidad y depuración
-El código incluye mensajes `print` en los puntos clave del flujo para facilitar la trazabilidad y depuración.
+Los `slow` son los **golden files** que congelan el camino legado bit a bit
+(`rtol=1e-12`). Conservan a propósito dos bugs del C++ original (un factor de
+unidades en `EhtoGHz` y una asimetría de matriz) para que el golden siga siendo
+fiel. **Si un cambio mueve un golden, es un cambio de física: para y repórtalo,
+no regeneres el golden.**
 
-## Extensión y mantenimiento
-- Puedes modificar los parámetros físicos en `src/main.py` o `src/trimer.py`.
-- Para agregar nuevos potenciales o física, extiende las clases en `src/atom.py` y `src/fermi_potentials.py`.
-- Las funciones matemáticas pueden ampliarse en `src/math_aux.py` y exponerse en `src/laplacian.py`.
+`tests/systems/rb_krb_polar/test_regression_fig1.py` ancla los números
+verificados de la Fig. 1 (n=25, M_J=0): profundidad −23.100 GHz,
+E(1800 a₀) = −0.338 GHz, 8 mínimos locales.
 
-## Cómo contribuir
-1. Haz un fork del repositorio y crea una rama para tu mejora o corrección.
-2. Asegúrate de que tu código siga la estructura y estilo del proyecto.
-3. Añade pruebas o ejemplos si es relevante.
-4. Haz un pull request describiendo claramente tu aporte.
+## Dependencias
 
-## Preguntas frecuentes (FAQ)
+Python ≥ 3.13 · numpy ^2.3 · scipy ^1.16 · matplotlib ^3.10 · Poetry · pytest
 
-**¿Qué hago si falta un archivo de datos?**
-- Verifica que el archivo esté en `data/Wavefunction/` y que el nombre sea exactamente igual (mayúsculas/minúsculas).
+## Extensión
 
-**¿Puedo usar mis propios datos?**
-- Sí, solo asegúrate de que el formato y dimensiones sean compatibles con los archivos de ejemplo.
+**Primero decide de qué sistema es** — ese es el punto de toda la estructura.
 
-**¿Cómo cambio los parámetros físicos?**
-- Modifica los valores en `src/main.py` o directamente en la llamada a `Trimer_energies_field`.
+- **Polar (vigente)**: términos de `H_mol` en `rb_krb_polar/charge_dipole.py`;
+  montaje de base y cero de energía en `bop_system.py`. Otro manifold es sólo
+  `--n-manifold`: no hay nada cableado a n=24 ni n=25.
+- **Perturbador neutro**: `rb_neutral_perturber/fermi_krb.py`. El camino legado
+  (`trimer.py`, `fermi_potentials.py`) está congelado — no lo extiendas.
+- **Matemáticas**: `mathlib/`. No metas contexto físico ahí.
 
-**¿Qué hago si obtengo un error de memoria?**
-- Prueba con valores más pequeños de `n1` o ejecuta el código en una máquina con más RAM.
+Cada punto de R es independiente, así que el barrido se paraleliza con
+`multiprocessing` o `joblib` sin más cuidado que mantener la salida ordenada.
 
-**¿Puedo paralelizar el cálculo?**
-- El código actual es secuencial, pero puedes paralelizar el bucle principal usando multiprocessing o herramientas similares de Python.
+## Documentación
+
+Toda la investigación se documenta en `docs/` (ver [`docs/INDEX.md`](docs/INDEX.md)).
+`docs/archive/rb_neutral_perturber/` conserva la saga del pseudopotencial:
+técnicamente correcta, pero de **otro sistema físico**.
 
 ## Contacto
-Para dudas o mejoras, contacta al autor original o al responsable de la migración.
+
+Migración a Python: Javier Aguilera — aguilerajavier58@gmail.com

@@ -21,14 +21,21 @@ Validar que la simulación funciona correctamente con parámetros pequeños (n1=
    - radio_max = 3.0 Bohr
    - num_points = 5 (solo 5 puntos)
 
-2. **Ejecución**:
+2. **Ejecución**. Lo más rápido y lo primero que hay que probar es la suite:
    ```bash
-   poetry run python src/main.py
+   poetry run pytest -m "not slow"      # 45 tests, ~25 s
    ```
-   Con los parámetros pequeños comentados en `main.py`, o:
+
+   Barrido corto del camino vigente (unos pocos puntos de R):
+   ```bash
+   poetry run python scripts/compute_bop_curve.py \
+       --n-manifold 25 --mj 0 --rmin 400 --rmax 500 --step 50 --no-plot
+   ```
+
+   Camino legado con parámetros mínimos:
    ```python
-   from src.trimer import Trimer_energies_field
-   Trimer_energies_field(n1=5, dc_field_au=0.1, radius_min=1.5, radius_max=3.0, num_points=5)
+   from trimero.systems.rb_neutral_perturber.trimer import Trimer_energies_field
+   Trimer_energies_field(n1=5, dc_field_au=0.1)
    ```
 
 3. **Validación**:

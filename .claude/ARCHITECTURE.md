@@ -1,208 +1,218 @@
-# Arquitectura del Proyecto Trimero
+# Arquitectura del proyecto
 
-## Visión General
+**Última actualización**: 2026-08-20 · Python 3.13+, NumPy 2.3+, SciPy 1.16+
 
-Este proyecto implementa una **simulación cuántica de trimero atómico** que:
-1. Carga datos de funciones de onda atómicas
-2. Calcula potenciales de Fermi entre átomos
-3. Construye una matriz Hamiltoniana para el sistema
-4. Diagonaliza la matriz para obtener niveles de energía
-5. Exporta autovalores en función del radio y campo eléctrico
+> Estado científico vigente: **[`docs/STATUS.md`](../docs/STATUS.md)**. Este
+> documento describe el **código**; `STATUS.md` describe la **física**.
 
-## Capas de Arquitectura
+## El punto de partida: son DOS sistemas físicos
 
-### 1. **Capa de Entrada de Datos** (`data/Wavefunction/`)
-- Archivos `.dat` con datos de funciones de onda: `rvsAS.dat`, `rvsAP.dat`, `rvsR38s.dat`, etc.
-- Archivos `.txt` con valores esperados: `exp_val_r.txt`
-- Todos los archivos se cargan en memoria al inicio en `Trimer_energies_field()`
+Lo más importante que hay que saber antes de tocar nada. El repositorio cubre
+dos problemas distintos que durante varias rondas estuvieron mezclados en el
+mismo espacio de nombres, hasta que la mezcla produjo resultados con premisa
+equivocada. Desde la reorganización del 2026-08-20 el árbol de paquetes los
+separa explícitamente.
 
-### 2. **Capa Física** (módulos en `src/`)
+| | `rb_krb_polar` | `rb_neutral_perturber` |
+|---|---|---|
+| perturbador | KRb, **polar** | átomo/molécula **neutra** |
+| interacción | carga-dipolo, `−d·F_ryd` | dispersión de contacto (pseudopotencial de Fermi) |
+| Hamiltoniano | `H_ad = H_A + H_mol` | `H = H_a + V_Fermi` |
+| referencia | Aguilera-Fernández 2015 / González-Férez 2015 | Aguilera-Fernández 2016 |
+| estado | **vigente** | verde y protegido, línea en pausa |
 
-#### `atom.py` - Clase `Atom`
-Encapsula la física de un átomo individual:
-- Propiedades: momento angular, paridad, índice de estado
-- Métodos: cálculo de overlaps, funciones de estado
+**El pseudopotencial de Fermi no interviene en el sistema polar.** Si te ves
+añadiendo `V_Fermi` a una curva de Rb\*-KRb, para y lee `docs/STATUS.md`.
+
+## Capas
+
+```
+src/trimero/
+├── mathlib/          primitivas matemáticas, sin contexto físico
+│   ├── angular.py        wigner_3j, gaunt            (lo usa el lado polar)
+│   ├── special.py        Spherical, DRnl, DOlm, DPhilm, hydrogenicR  (lado legado)
+│   └── laplacian.py      reexporta special.py
+├── basis/            enumeración de la base, compartida
+│   ├── quantum.py        CoupledBasis, QuantumBasisBlock — |l m_l> ⊗ |N M_N>,
+│   │                     bloqueada por M_J
+│   └── radial.py         RadialBasis — tablas radiales hidrogenoides
+├── simulation/
+│   └── bop_tracking.py   trace_curve — rastreo de curvas, agnóstico del sistema
+└── systems/
+    ├── rb_atom.py        Atom.E_Rb() — defectos cuánticos de Rb. COMPARTIDO:
+    │                     es la fuente de verdad de los dos sistemas
+    ├── rb_krb_polar/
+    │   ├── charge_dipole.py   RydbergElectronField, ChargeDipoleHamiltonian,
+    │   │                      rydberg_diagonal, constantes de KRb
+    │   ├── bop_system.py      BOPSystem — monta base + H para un manifold dado
+    │   └── rb_defects.py      DELTA0_NS_PAPER, neighbor_levels(), n_star_nl()
+    └── rb_neutral_perturber/
+        ├── fermi_krb.py         ScatteringLengths, FermiPseudopotential
+        │                        (vectorizado, sobre CoupledBasis)
+        ├── fermi_potentials.py  FermiPotentials  ── legado, golden files
+        └── trimer.py            Trimer_energies_field  ── legado, golden files
+```
+
+Regla de dependencia: `mathlib` → `basis` → `systems`. Nada de `mathlib` o
+`basis` debería conocer un sistema concreto (ver **Deuda** más abajo: hoy hay
+dos excepciones).
+
+### Grafo real de dependencias
+
+```
+basis/radial.py                       → systems.rb_krb_polar.rb_defects        ⚠️
+mathlib/laplacian.py                  → mathlib.special
+systems/rb_atom.py                    → mathlib.{laplacian,special}
+rb_krb_polar/bop_system.py            → basis.{quantum,radial}
+                                        rb_krb_polar.{charge_dipole,rb_defects}
+                                        rb_neutral_perturber.fermi_krb          ⚠️
+rb_krb_polar/charge_dipole.py         → basis.{quantum,radial} · mathlib.angular
+                                        systems.rb_atom · rb_krb_polar.rb_defects
+rb_krb_polar/rb_defects.py            → systems.rb_atom
+rb_neutral_perturber/fermi_krb.py     → basis.{quantum,radial}
+                                        rb_krb_polar.rb_defects                 ⚠️
+rb_neutral_perturber/fermi_potentials → mathlib.{laplacian,special}
+rb_neutral_perturber/trimer.py        → systems.rb_atom
+                                        rb_neutral_perturber.fermi_potentials
+```
+
+Las tres ⚠️ son deuda conocida y documentada, no descuidos. Ver abajo.
+
+## El camino vigente: Rb\*-KRb
+
+### `BOPSystem` es la pieza central
 
 ```python
-class Atom:
-    def __init__(self, name, l_value, parity, ...):
-        # Define el estado atómico
+from trimero.systems.rb_krb_polar.bop_system import BOPSystem
+from trimero.systems.rb_krb_polar.rb_defects import DELTA0_NS_PAPER
+
+sysm = BOPSystem(n_manifold=25, delta0_ns=DELTA0_NS_PAPER)
+H = sysm.hamiltonian(R=800.0, M_J=0, fermi=False)   # 1113 × 1113
 ```
 
-**Responsabilidad**: Definir estados atómicos base sin interacción.
+Construir cuesta unos segundos (tablas radiales); **reutiliza la instancia para
+todo un barrido en R**. Todo lo que depende del manifold sale de un único
+parámetro `n_manifold`:
 
-#### `fermi_potentials.py` - Clase `FermiPotentials`
-Calcula potenciales de Fermi como función de la distancia:
-- Métodos: `get_potential(r)`, `set_parameters()`
-- Parametrización: exponenciales decrecientes típicas de Fermi
+| qué | de dónde sale |
+|---|---|
+| l máximo del manifold | `n_manifold − 1` → `CoupledBasis` |
+| niveles vecinos (n+1)d, (n+2)p, (n+3)s | `rb_defects.neighbor_levels(n)` |
+| funciones radiales | `RadialBasis` |
+| energías diagonales de H_A | `rydberg_diagonal(n_manifold)` |
+| cero de energía | `E_manifold = −0.5/n²`, exacto para l ≥ 3 |
 
-```python
-class FermiPotentials:
-    def __init__(self, a0_length):
-        self.a0 = a0_length
-    
-    def get_potential(self, r_au):
-        # Retorna V(r) en unidades atómicas
+**`fermi=False` no significa «apagar un término de este sistema»**: significa
+que el pseudopotencial no forma parte del modelo polar. Que el flag exista es
+deuda, no diseño.
+
+### Identificación de la curva: por CARÁCTER, no por índice
+
+`character_curve()` devuelve la curva adiabática **más baja con peso de manifold
+> 50 %**, evaluado en cada R. Un índice fijo identificado en un extremo no vale:
+los estados de (n+1)d y (n+2)p producen cruces evitados y el índice cambia de
+objeto por el camino.
+
+### Punto de entrada
+
+```bash
+poetry run python scripts/compute_bop_curve.py --n-manifold 25 --mj 0 1
 ```
 
-**Responsabilidad**: Proveer interacciones de dos cuerpos entre átomos.
+**Único script de producción.** Los doce `run_*.py` / `analyze_*.py` de las
+rondas de exploración están en `scripts/archive/`, con sus imports arreglados
+pero sin garantía de que su física siga siendo la vigente.
 
-#### `math_aux.py` - Funciones Matemáticas Especiales
-Contiene utilidades numéricas:
-- **Armónicos esféricos**: Y_lm(θ, φ)
-- **Derivadas radiales**: dψ/dr
-- **Integrales**: overlaps entre funciones de onda
+## El camino legado: perturbador neutro
 
-```python
-def spherical_harmonics(l, m, theta, phi):
-    # Y_lm(θ, φ)
+`Trimer_energies_field(n1, dc_field_au)` es la traducción directa del C++
+original: lee `data/Wavefunction/*.dat`, construye la matriz `n1²×n1²` con la
+lógica de casos A/B/C/D según el `l` de cada índice, diagonaliza por cada fila
+de R y escribe `Trimer_R_sp_wave_*.dat`.
 
-def radial_derivative(psi, r_grid):
-    # Calcula dψ/dr numéricamente
-```
+**Está congelado y protegido por golden files bit a bit** (`rtol=1e-12`), en
+`tests/systems/rb_neutral_perturber/characterization/`. La cadena es g1
+(funciones especiales) → g2 (`FermiPotentials`) → g3 (matrices) → g4
+(autovalores end-to-end). Los tests documentan explícitamente dos bugs del
+legado que **se conservan a propósito** para que el golden siga siendo fiel:
+un factor de unidades en `EhtoGHz` y una asimetría de la matriz.
 
-**Responsabilidad**: Proporcionar primitivas matemáticas reutilizables.
+⚠️ **No refactorices este camino «de paso».** Cualquier cambio que altere un
+golden es un cambio de física, y hay que tratarlo como tal.
 
-#### `laplacian.py` - Interfaz Pública de Matemáticas
-Expone funciones de `math_aux.py` de forma limpia:
-```python
-from laplacian import spherical_harmonics, radial_derivative
-```
-
-**Responsabilidad**: Mantener una API coherente y versátil.
-
-### 3. **Capa de Simulación** (`trimer.py`)
-
-#### Función Principal: `Trimer_energies_field(n1, dc_field_au, ...)`
-
-**Responsabilidad Central**: Orquestar toda la simulación.
-
-```python
-def Trimer_energies_field(n1, dc_field_au, ...):
-    # 1. Cargar datos
-    data = load_all_data()
-    
-    # 2. Construir matriz de campo eléctrico
-    field_matrix = build_dc_field_matrix(n1, dc_field_au)
-    
-    # 3. Bucle principal: para cada radio R
-    for R in radius_points:
-        # Construir H(R) con lógica de casos A, B, C, D
-        H = build_hamiltonian(R, data, field_matrix)
-        
-        # Diagonalizar
-        eigenvalues = scipy.linalg.eigvalsh(H)
-        
-        # Guardar
-        save_eigenvalues(R, eigenvalues)
-```
-
-**Lógica de Casos Físicos**:
-- **Caso A/B/C/D**: Diferentes configuraciones de solapamiento angular
-  - Determinan qué elementos de matriz Hamiltoniana están activos
-  - Afectan la dimensión de la matriz
-
-**Matriz Hamiltoniana**:
-```
-H = H0 + H_interaction + H_field
-
-H0: Energía de átomos individuales (diagonal)
-H_interaction: Potenciales de Fermi (off-diagonal)
-H_field: Interacción con campo eléctrico externo
-```
-
-### 4. **Capa de Entrada-Salida** (en `trimer.py` y `main.py`)
-
-#### Lectura
-- `numpy.loadtxt()` para `.dat`, `.txt`
-- Manejo de rutas relativas a `data/Wavefunction/`
-
-#### Escritura
-- Formato: ASCII, una línea por punto de R
-- Estructura: `R eigenvalue_1 eigenvalue_2 ... eigenvalue_N`
-- Archivos: `Trimer_R_sp_wave_N{n1}_R_{int(100*radius)}_GHz.dat`, etc.
-
-### 5. **Capa de Control** (`main.py`)
-
-Punto de entrada que:
-- Define parámetros físicos (n1, dc_field_au, radio_min, radio_max)
-- Llama `Trimer_energies_field()`
-- Incluye `test_trimer_energies_field()` para validación rápida
-
-## Dependencias Entre Módulos
+## Tests
 
 ```
-main.py
-  └─> trimer.py (Trimer_energies_field)
-       ├─> atom.py (Atom)
-       ├─> fermi_potentials.py (FermiPotentials)
-       ├─> math_aux.py (spherical_harmonics, derivadas, etc.)
-       ├─> laplacian.py (interfaz de math_aux)
-       └─> data/ (lectura de archivos .dat)
+tests/
+├── conftest.py                    pone src/ en el path
+├── basis/                         enumeración de la base (compartida)
+└── systems/
+    ├── rb_krb_polar/              charge_dipole, rydberg_field, bop_system,
+    │                              regression_fig1
+    └── rb_neutral_perturber/      fermi_krb + characterization/ (goldens)
 ```
 
-## Invariantes de Diseño
+**48 tests.** `poetry run pytest` completo tarda ~6 min (los `slow` son los
+goldens end-to-end del legado). Para iterar: `pytest -m "not slow"`, ~25 s.
 
-1. **Separación de Responsabilidades**:
-   - `atom.py`: Define estados, no resuelve ecuaciones
-   - `fermi_potentials.py`: Calcula V(r), no construye Hamiltonianos
-   - `math_aux.py`: Primitivas matemáticas, no contexto físico
-   - `trimer.py`: Orquesta y ejecuta la simulación
+`tests/systems/rb_krb_polar/test_regression_fig1.py` ancla los números
+verificados de la Fig. 1 (n=25, M_J=0): profundidad −23.100 GHz, E(1800 a₀) =
+−0.338 GHz, 8 mínimos locales, contra `plots/fig1_ad_MJ0_n25.npz`.
 
-2. **Inmutabilidad de Datos**:
-   - Los datos cargados (`rvsAS`, etc.) no se modifican después de la carga
-   - Los resultados se escriben una única vez
+## Datos y artefactos
 
-3. **Unidades Consistentes**:
-   - Entrada: Unidades atómicas (Bohr, Hartree)
-   - Salida: Hartree (energía) o GHz (si se convierte)
-   - Conversión explícita en funciones específicas
+| ruta | qué |
+|---|---|
+| `data/Wavefunction/` | `.dat` de entrada. `rvsAS`/`rvsAP` son longitudes de dispersión: **insumo exclusivo del perturbador neutro** |
+| `plots/` | sólo lo vigente: `fig1_ad_MJ0_MJ1_n25.png` y los dos `.npz` que lo respaldan |
+| `plots/archive/` | figuras y datos de rondas superadas |
+| `docs/` | los 5 documentos de referencia activa + `STATUS.md` |
+| `docs/archive/rb_neutral_perturber/` | la saga del pseudopotencial: correcta, pero de otro sistema |
 
-4. **Determinismo**:
-   - Mismo input → Mismo output (sin aleatoriedad)
-   - Útil para validación y reproducibilidad
+⚠️ `graphify-out/` y `plots/` **van siempre al commit**, nunca al `.gitignore`.
 
-## Flujo de Ejecución
+## Invariantes
 
-```
-1. main.py → Leer parámetros
-2. Trimer_energies_field() → Cargar data/
-3. loop R:
-   a. Construir H(R) con casos A/B/C/D
-   b. Diagonalizar H(R)
-   c. Guardar autovalores
-4. Salida: Archivos *.dat con resultados
-```
+1. **Una sola definición de la base.** La composición manifold + (n+1)d +
+   (n+2)p + (n+3)s vive en `rb_defects.neighbor_levels()`. No se escribe a mano
+   en ningún otro sitio.
+2. **`Atom.E_Rb()` es la fuente de verdad** de los defectos cuánticos de Rb.
+   `DELTA0_NS_PAPER` es un override local para comparar con un paper concreto;
+   `delta0_ns=None` delega exactamente en `Atom` sin cambiar nada.
+3. **Unidades**: interno en unidades atómicas (a₀, E_h). La conversión a GHz es
+   explícita y sólo en la frontera de salida (`GHZ_PER_HARTREE`).
+4. **Determinismo**: mismo input → mismo output. Los goldens dependen de ello.
+5. **Los golden files son ley.** Si un cambio los mueve, es un cambio de física.
 
-## Puntos de Extensión
+## Deuda técnica
 
-### Agregar Nueva Física
-- **Nuevos términos en H**: Edita `build_hamiltonian()` en `trimer.py`
-- **Nuevos potenciales**: Extiende `FermiPotentials`
-- **Nuevos estados atómicos**: Añade instancias de `Atom`
+1. **`BOPSystem` sigue acoplado a `fermi_krb`.** `__post_init__` construye
+   siempre un `FermiPseudopotential` (lee `rvsAS.dat`/`rvsAP.dat`) y
+   `hamiltonian()` tiene `fermi=True` por defecto, aunque el modelo polar no lo
+   use. Desacoplarlo **cambia números** y hay tres tests que dependen del
+   comportamiento actual, así que se dejó para una ronda propia.
+2. **`rb_defects.py` mezcla dos cosas**: física atómica de Rb (compartida) y
+   composición de la base del paper polar. Por eso `basis/radial.py` y
+   `rb_neutral_perturber/fermi_krb.py` importan de `rb_krb_polar/`. Separarlas
+   cerraría las dos inversiones de capa restantes.
 
-### Mejora de Rendimiento
-- **Paralelizar bucle de R**: Usa `multiprocessing.Pool` o `joblib`
-- **Cachear diagonalizaciones**: Almacena H para R idénticos
-- **Vectorizar operaciones**: Reemplaza loops con numpy donde sea posible
+## Rendimiento
 
-### Validación
-- **Comparar con C++**: Los archivos `.dat` deben coincidir en precisión
-- **Tests unitarios**: Crea en `tests/` para funciones de `math_aux.py`
-- **Visualización**: Usa matplotlib para graficar espectros
+| operación | complejidad | nota |
+|---|---|---|
+| montar `BOPSystem` | — | ~segundos, **una sola vez por barrido** |
+| construir H(R) | O(dim²) | dim = 1113 para n=25, M_J=0 |
+| diagonalizar | O(dim³) | ~1.1 s/punto — el cuello de botella |
+| barrido en R | O(n_R × dim³) | 281 puntos ≈ 5 min. Paralelizable: cada R es independiente |
 
-## Consideraciones de Rendimiento
+`eigvalsh` es ~2× más rápido que `eigh`, pero el criterio de carácter necesita
+los autovectores, así que la curva BOP no puede usarlo.
 
-| Operación | Complejidad | Nota |
-|-----------|------------|------|
-| Cargar datos | O(n_datos) | Una única vez |
-| Construir H | O(n_basis²) | Depende de n1 |
-| Diagonalizar H | O(n_basis³) | Bottleneck principal |
-| Bucle de R | O(n_radius × n_basis³) | Paralelizable |
+## Puntos de extensión
 
-Para n1 pequeño (5–10), es rápido. Para n1 > 30, considera paralelización.
-
----
-
-**Última actualización**: 2026-08-18  
-**Versión de migración**: Python 3.13+, NumPy 2.3.1+, SciPy 1.16.0+
+- **Otro manifold**: `--n-manifold`. No hay nada cableado a n=24 ni n=25.
+- **Otro término en H_mol**: `ChargeDipoleHamiltonian` en `charge_dipole.py`.
+- **Retomar el perturbador neutro**: el código está verde en
+  `rb_neutral_perturber/`; lo que falta es el barrido de producción
+  (`compute_bop_curve.py --system neutral` lanza `NotImplementedError` con las
+  indicaciones). Material de referencia en `docs/archive/rb_neutral_perturber/`.

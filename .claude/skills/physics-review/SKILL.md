@@ -51,7 +51,14 @@ Analizar cambios en la física del código (matriz Hamiltoniana, potenciales, et
 
 1. **Identificar cambios**:
    - Inspecciona `git diff` o archivos modificados
-   - Enfoca en: `trimer.py`, `fermi_potentials.py`, `math_aux.py`, `atom.py`
+   - **Primero: ¿de qué sistema físico es el cambio?** `rb_krb_polar/` y
+     `rb_neutral_perturber/` no comparten modelo. Ver `.claude/ARCHITECTURE.md`.
+   - Polar (vigente): `systems/rb_krb_polar/{charge_dipole,bop_system,rb_defects}.py`
+   - Neutro: `systems/rb_neutral_perturber/fermi_krb.py`
+   - Legado congelado: `systems/rb_neutral_perturber/{trimer,fermi_potentials}.py`
+   - Compartido: `systems/rb_atom.py`, `basis/`, `mathlib/`
+   - ⚠️ Si el cambio mueve un golden file, es un cambio de física: **para y
+     repórtalo**, no regeneres el golden.
 
 2. **Verificar matemática**:
    - Revisa derivaciones en comentarios
@@ -79,7 +86,7 @@ Recomendación: Ejecutar /quick-test antes de /run-simulation
 
 ## Ejemplo de Revisión
 
-Si el usuario hace cambio en `fermi_potentials.py`:
+Si el usuario hace cambio en `systems/rb_neutral_perturber/fermi_potentials.py` (legado congelado):
 
 ```python
 # Cambio propuesto:

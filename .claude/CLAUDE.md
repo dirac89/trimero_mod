@@ -2,36 +2,71 @@
 
 ## Descripción General
 
-Este proyecto simula la física de un **trimero atómico** (tres átomos interactuantes) usando:
-- Potenciales de Fermi para la interacción atómica
-- Diagonalización de matrices Hamiltonianas
-- Análisis de estados propios en función de campos eléctricos
+Estructura electrónica de **moléculas Rydberg de largo alcance**: un átomo de Rb
+en estado Rydberg perturbado por un compañero, resuelta por diagonalización del
+Hamiltoniano en una base acoplada.
 
-**Status**: Migración completada de C++ a Python (rama: `migrate-python`)
+⚠️ **El repositorio cubre DOS sistemas físicos distintos.** Es lo primero que
+hay que saber; mezclarlos ya produjo varias rondas con premisa equivocada.
+
+| | `rb_krb_polar` | `rb_neutral_perturber` |
+|---|---|---|
+| perturbador | KRb, **polar** | átomo/molécula **neutra** |
+| interacción | carga-dipolo, `−d·F_ryd` | pseudopotencial de Fermi (contacto) |
+| Hamiltoniano | `H_ad = H_A + H_mol` | `H = H_a + V_Fermi` |
+| estado | **vigente** | verde y congelado, línea en pausa |
+
+**El pseudopotencial de Fermi NO interviene en el sistema polar.** Si te ves
+añadiendo `V_Fermi` a una curva de Rb*-KRb, para y lee `docs/STATUS.md`.
+
+**Status**: migración C++ → Python completada; reorganizado por sistema físico
+el 2026-08-20. Rama: `migrate-python`.
+
+## Documentos de entrada
+
+| documento | para qué |
+|---|---|
+| [`docs/STATUS.md`](../docs/STATUS.md) | **empieza aquí**: la física vigente en una página |
+| [`.claude/ARCHITECTURE.md`](ARCHITECTURE.md) | el código: capas, dependencias, invariantes, deuda |
+| [`docs/INDEX.md`](../docs/INDEX.md) | catálogo completo de documentación |
 
 ## Estructura del Proyecto
 
 ```
-src/
-├── main.py              # Punto de entrada, llama simulación principal
-├── trimer.py            # Lógica principal: Trimer_energies_field()
-├── atom.py              # Clase Atom: encapsula física atómica
-├── fermi_potentials.py  # Clase FermiPotentials: cálculo de potenciales
-├── math_aux.py          # Funciones matemáticas especiales (armónicos esféricos, etc.)
-└── laplacian.py         # Interfaz de funciones matemáticas
+src/trimero/
+├── mathlib/          angular.py (3j/Gaunt), special.py, laplacian.py
+├── basis/            quantum.py (CoupledBasis), radial.py (RadialBasis)
+├── simulation/       bop_tracking.py (trace_curve)
+└── systems/
+    ├── rb_atom.py                 Atom.E_Rb() — defectos cuánticos, COMPARTIDO
+    ├── rb_krb_polar/              charge_dipole.py, bop_system.py, rb_defects.py
+    └── rb_neutral_perturber/      fermi_krb.py, fermi_potentials.py, trimer.py
 
-data/
-└── Wavefunction/        # Archivos de datos (*.dat, *.txt)
+scripts/compute_bop_curve.py       único script de producción
+scripts/archive/                   los 12 scripts de exploración
+tests/{basis,systems}/             48 tests; goldens del legado en
+                                   systems/rb_neutral_perturber/characterization/
+data/Wavefunction/                 .dat de entrada
+docs/                              referencia activa + STATUS.md
+docs/archive/rb_neutral_perturber/ la saga del pseudopotencial (otro sistema)
+plots/                             sólo lo vigente; el resto en plots/archive/
 ```
 
 ## Cómo Ejecutar
 
 ```bash
 poetry install
-poetry run python src/main.py
+
+# Curvas BOP de Rb*-KRb (el camino vigente)
+poetry run python scripts/compute_bop_curve.py --n-manifold 25 --mj 0 1
+
+# Tests: rápidos mientras iteras, completo antes de commitear
+poetry run pytest -m "not slow"    # ~25 s
+poetry run pytest                  # ~6 min, incluye los goldens del legado
 ```
 
-Salida: Archivos `Trimer_R_sp_wave_*.dat` con autovalores por radio.
+`compute_bop_curve.py` escribe `plots/fig1_ad_MJ<..>_n<n>.npz` y su PNG.
+El camino legado (`Trimer_energies_field`) produce `Trimer_R_sp_wave_*.dat`.
 
 ## Reglas de Desarrollo
 
@@ -42,19 +77,34 @@ Salida: Archivos `Trimer_R_sp_wave_*.dat` con autovalores por radio.
 - **Tipos**: Usa type hints en funciones públicas
 
 ### 2. Cambios de Código
-- **No refactorices sin necesidad**: El código está estructurado, mantén el diseño
-- **Mantén la trazabilidad**: Los `print()` de depuración están permitidos si marcan puntos clave
-- **Datos de entrada**: Siempre valida que los archivos en `data/Wavefunction/` existan antes de usar
-- **Salida**: Guarda resultados en archivos `.dat` con formato consistente (R, autovalores)
+- **Respeta la frontera entre sistemas**: nada de `rb_krb_polar/` debería
+  importar de `rb_neutral_perturber/` ni al revés. Hoy hay una excepción
+  (`BOPSystem` → `fermi_krb`), documentada como deuda en `ARCHITECTURE.md`;
+  no añadas la segunda.
+- **`mathlib/` y `basis/` son compartidos**: no deben conocer un sistema concreto.
+- **No refactorices sin necesidad**: el código está estructurado, mantén el diseño
+- **Mantén la trazabilidad**: los `print()` de depuración están permitidos si
+  marcan puntos clave
+- **Datos de entrada**: valida que los archivos en `data/Wavefunction/` existan
+  antes de usarlos
 
 ### 3. Testing y Validación
-- Usa la función `test_trimer_energies_field()` en `src/main.py` para pruebas rápidas
-- Valida con parámetros pequeños (ej: `n1=5`, `dc_field_au=0.1`)
-- Prueba cambios en física antes de ejecutar simulaciones grandes
+- `poetry run pytest -m "not slow"` mientras iteras; **completo antes de commitear**
+- **Los golden files son ley.** `tests/systems/rb_neutral_perturber/characterization/`
+  fija el camino legado bit a bit (`rtol=1e-12`). Si un cambio los mueve, es un
+  **cambio de física**: para y repórtalo, no ajustes el golden para que encaje.
+  Conservan a propósito dos bugs del legado (unidades en `EhtoGHz`, asimetría de
+  matriz) para que el golden siga siendo fiel al C++ original.
+- `tests/systems/rb_krb_polar/test_regression_fig1.py` ancla los números
+  verificados de la Fig. 1: −23.100 GHz, E(1800 a₀) = −0.338 GHz, 8 mínimos.
+- Valida con parámetros pequeños antes de lanzar barridos largos
+  (un barrido de 281 puntos son ~5 min)
 
 ### 4. Documentación
 - Comenta el **POR QUÉ**, no el **QUÉ** (el código es autodocumentado)
 - Documenta cambios en física o matemática que no sean obvios
+- Si cambias la estructura de paquetes, actualiza `.claude/ARCHITECTURE.md`
+- Si cambias la física vigente, actualiza `docs/STATUS.md`
 - Mantén el README.md actualizado si cambias la interfaz pública
 
 ### 5. Documentación de Investigación
@@ -119,17 +169,30 @@ Guardar en `docs/` con nomenclatura clara:
 ## Extensión del Proyecto
 
 ### Agregar Nueva Física
-1. Extiende `Atom` en `src/atom.py` o `FermiPotentials` en `src/fermi_potentials.py`
-2. Usa `math_aux.py` para funciones matemáticas complejas
-3. Actualiza `Trimer_energies_field()` si cambias la matriz Hamiltoniana
+**Primero decide de qué sistema es.** Ese es el punto de todo el árbol.
 
-### Paralización
-El bucle principal de `Trimer_energies_field()` puede paralelizarse con `multiprocessing` o `joblib`, pero mantén la salida de datos ordenada por radio.
+- **Sistema polar (vigente)**: nuevos términos de `H_mol` en
+  `systems/rb_krb_polar/charge_dipole.py`; el montaje de la base y el cero de
+  energía en `bop_system.py`. Otro manifold es sólo `--n-manifold`: no hay nada
+  cableado a n=24 ni n=25.
+- **Perturbador neutro**: `systems/rb_neutral_perturber/fermi_krb.py` (versión
+  vectorizada). El camino legado (`trimer.py`, `fermi_potentials.py`) está
+  **congelado**: no lo extiendas, replica en la capa moderna.
+- **Matemáticas nuevas**: `mathlib/angular.py` (álgebra angular) o
+  `mathlib/special.py` (funciones especiales). No metas contexto físico ahí.
+
+### Paralelización
+Cada punto de R es independiente: el barrido de `compute_bop_curve.py` se
+paraleliza con `multiprocessing` o `joblib` sin más cuidado que mantener la
+salida ordenada por R. Es donde está el 95 % del tiempo (~1.1 s/punto).
 
 ### Análisis de Resultados
-- Los archivos `.dat` generados contienen: `R, eigenvalue_1, eigenvalue_2, ...`
-- Usa matplotlib para graficar energías vs radio
-- Valida que los autovalores sean reales y ordenados ascendentemente
+- `compute_bop_curve.py` guarda `.npz` con `R`, `E` (GHz, relativa al cero de
+  energía), `K` (índice de la curva), `W` (peso de manifold) y `spectrum`.
+- Los `.dat` del camino legado contienen `R, eigenvalue_1, eigenvalue_2, ...`
+- Valida que los autovalores sean reales y que el peso de manifold sea ~1 en el
+  borde superior: si no, la curva ha cambiado de carácter y el resultado no es
+  lo que crees.
 
 ## Skills Disponibles
 
@@ -143,7 +206,18 @@ El bucle principal de `Trimer_energies_field()` puede paralelizarse con `multipr
 - La simulación fallará con `FileNotFoundError`. Revisa `data/Wavefunction/` y nombres exactos.
 
 **¿Cómo cambio parámetros físicos?**
-- Edita `src/main.py` o llama `Trimer_energies_field()` con otros valores en `n1`, `dc_field_au`, etc.
+- Camino vigente: opciones de `scripts/compute_bop_curve.py` (`--n-manifold`,
+  `--mj`, `--rmin/--rmax/--step`, `--weight`), o construye un `BOPSystem`
+  directamente.
+- Camino legado: llama `Trimer_energies_field(n1, dc_field_au)`.
+
+**¿Por qué `hamiltonian()` tiene un flag `fermi`?**
+- Es deuda técnica, no diseño. `fermi=False` no significa «apagar un término de
+  este sistema»: significa que el pseudopotencial **no forma parte** del modelo
+  polar. Ver `.claude/ARCHITECTURE.md` §Deuda técnica.
+
+**Un golden file ha cambiado, ¿lo regenero?**
+- **No.** Es un cambio de física disfrazado. Para y repórtalo.
 
 **¿Puedo manejar valores complejos en la matriz?**
 - Sí, scipy soporta matrices complejas. Asegúrate que los autovalores sean reales si es esperado físicamente.
