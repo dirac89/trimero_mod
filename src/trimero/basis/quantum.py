@@ -63,14 +63,35 @@ class CoupledBasis:
     Contiene 59 bloques (M_J = -29 a 29), cada uno independiente.
     """
 
-    def __init__(self, N_max: int = 6, manifold_l_min: int = 3):
+    def __init__(self, N_max: int = 6, manifold_l_min: int = 3,
+                 manifold_l_max: int = 23, neighbor_l=(0, 1, 2)):
         """
         Args:
             N_max (int): número máximo de cuantos rotacionales de KRb (típico: 6)
             manifold_l_min (int): mínimo orbital angular en manifold (típico: 3)
+            manifold_l_max (int): máximo orbital angular del manifold, = n-1.
+                Por defecto 23 (manifold n=24); para n=25 hay que pasar 24.
+                Es el único sitio donde el n del manifold entra en la base: el
+                resto de la física lo fija `rydberg_diagonal(n_manifold=...)`.
+            neighbor_l: valores de l de los niveles vecinos individuales.
+                **(0, 1, 2)** = (n+3)s, (n+2)p, (n+1)d, que es la base del
+                paper (Aguilera-Fernández et al. 2015, arXiv:1507.07972).
+                `(0,)` reproduce la base INCOMPLETA usada antes de leer ese
+                texto, sólo manifold + (n+3)s; se conserva para poder medir
+                cuánto cambia añadir los otros dos, no para producción.
+
+        Ojo: cada l identifica unívocamente un nivel, porque los tres vecinos
+        tienen l = 0, 1, 2 y el manifold empieza en l = 3. Por eso el estado
+        sigue siendo (l, m_l, N, M_N) sin necesidad de llevar n en la tupla.
         """
         self.N_max = N_max
         self.manifold_l_min = manifold_l_min
+        self.manifold_l_max = manifold_l_max
+        self.neighbor_l = tuple(sorted(neighbor_l))
+        if any(l >= manifold_l_min for l in self.neighbor_l):
+            raise ValueError(
+                f"los vecinos {self.neighbor_l} deben tener l < manifold_l_min="
+                f"{manifold_l_min}: si no, l ya no identifica el nivel")
 
         # Generar todos los estados sin restricción M_J
         self.all_states = self._enumerate_all_states()
@@ -83,8 +104,10 @@ class CoupledBasis:
         Enumera TODOS los estados {(l, m_l, N, M_N)} de la base.
 
         Restricciones:
-        - l ∈ {3, 4, ..., 23} (manifold Rb n=24, excluye l=0,1,2 por defecto cuántico)
-        - l = 0 (estado 27s)
+        - l ∈ {manifold_l_min..manifold_l_max} (manifold Rb; excluye l=0,1,2
+          por defecto cuántico). Con los valores por defecto, {3..23} = n=24.
+        - l ∈ neighbor_l, uno por nivel vecino individual: l=0 es (n+3)s,
+          l=1 es (n+2)p, l=2 es (n+1)d
         - m_l ∈ [-l, l]
         - N ∈ [0, N_max]
         - M_N ∈ [-N, N]
@@ -93,21 +116,13 @@ class CoupledBasis:
             List[(l, m_l, N, M_N)]: todos los estados, sin filtro M_J
         """
         states = []
-
-        # Manifold principal: l ∈ {manifold_l_min..23}
-        for l in range(self.manifold_l_min, 24):
+        l_all = (list(range(self.manifold_l_min, self.manifold_l_max + 1))
+                 + list(self.neighbor_l))
+        for l in l_all:
             for m_l in range(-l, l + 1):
                 for N in range(0, self.N_max + 1):
                     for M_N in range(-N, N + 1):
                         states.append((l, m_l, N, M_N))
-
-        # Estado 27s: l=0
-        l = 0
-        for m_l in range(-l, l + 1):  # m_l = 0 only
-            for N in range(0, self.N_max + 1):
-                for M_N in range(-N, N + 1):
-                    states.append((l, m_l, N, M_N))
-
         return states
 
     def _partition_by_mj(self) -> Dict[int, QuantumBasisBlock]:

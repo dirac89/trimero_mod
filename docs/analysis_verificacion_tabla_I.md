@@ -1,5 +1,15 @@
 # Verificación contra la Tabla I de González-Férez 2015: defectos cuánticos de Rb
 
+> ⚠️ **Nota añadida 2026-08-19.** Los §10 (convergencia en N) y §11 (orientación)
+> se calcularon con una base electrónica **incompleta**: manifold + 27s, sin los
+> vecinos 25d y 26p que el paper también incluye. Se han recalculado con la base
+> correcta en `docs/analysis_base_correcta_3_vecinos.md` §4: los números apenas
+> cambian (⟨cos θ_d⟩ ≤2.5×10⁻³, cruce de 0.78 sigue entre 380 y 400 a₀), pero el
+> criterio «10 autovalores más bajos» del §10 deja de medir el estado relevante.
+> Los §1–§9 (energías atómicas) **no dependen de la base** y siguen válidos.
+> Confirmado allí: los tres vecinos de la base son 27s, 25d y 26p, y los tres
+> están en esta tabla; los otros cuatro niveles son puntos de contraste.
+
 **Fecha**: 2026-08-19
 **Autor**: Javier Aguilera
 **Relevancia**: Primera comparación directa de nuestros números con valores

@@ -1,8 +1,12 @@
 # Índice de Documentación de Investigación
 
-Este directorio contiene toda la documentación de investigación, análisis teórico y notas científicas relacionadas con el proyecto Trimero.
+Este directorio contiene toda la documentación de investigación, análisis teórico y notas científicas del proyecto. El repositorio cubre **dos sistemas físicos distintos** —Rb*-KRb
+polar y perturbador neutro—; ver `STATUS.md` para la separación.
 
-**Última actualización**: 2026-08-18
+**Última actualización**: 2026-08-20
+
+> **Empieza por [`STATUS.md`](STATUS.md)** — estado vigente del proyecto en una
+> página. Este índice es el catálogo completo; `STATUS.md` dice qué es actual.
 
 ## Documentación Disponible
 
@@ -33,19 +37,35 @@ Este directorio contiene toda la documentación de investigación, análisis te�
 
 ## Documentos Existentes
 
+### Vigentes
+
 | Documento | Contenido |
 |---|---|
+| `STATUS.md` | 🟢 **PUNTO DE ENTRADA**: modelo físico vigente de Rb*-KRb, base, criterio de carácter, δ₀(ns), deuda técnica y enlaces a la referencia activa |
 | `AUDIT_MIGRACIÓN_PYTHON.md` | Auditoría de la migración C++ → Python |
 | `DISEÑO_HAMILTONIANO_KRBC.md` / `_v2.md` | Diseño del Hamiltoniano Rb*-KRb; base acoplada y bloqueo por M_J |
-| `analysis_procedencia_rvsAS_rvsAP.md` | ⚠️ Punto abierto: procedencia de los `.dat` de entrada |
 | `analysis_validacion_carga_dipolo.md` | `B·N²` + campo del ion Rb⁺: derivación, 4 tests analíticos, escalado 1/R⁴ |
-| `analysis_interpolacion_polo_Ap.md` | Interpolación de 1/A_p a través del polo; ⚠️ CORRIGE la conclusión de `analysis_resonancia_onda_p.md`: el pozo butterfly no era artefacto |
-| `analysis_resonancia_onda_p.md` | Resonancia de forma p: posición confirmada (24.8 vs 23 meV) pero el pozo de −6.5 THz es artefacto de interpolar sobre un hueco de malla |
-| `analysis_curva_bop_MJ0.md` | ⚠️ Curva BOP M_J=0: seguimiento adiabático vs diabático, y un butterfly de onda p a −6.5 THz sin explicar |
+| `analysis_fig1_carga_dipolo_sin_fermi.md` | ✅ **EL CÁLCULO BUENO para Rb*-KRb**: `H_ad = H_A + H_mol`, sin pseudopotencial de Fermi. Curvas M_J=0 y M_J=1 en R∈[400,1800] a₀ completas, sin remapeo ni ventanas. Explica qué documentos anteriores quedan con premisa equivocada |
+| `analysis_base_correcta_3_vecinos.md` | ⚠️ **CORRIGE la base electrónica de toda la sesión**: el paper usa manifold + (n+1)d + (n+2)p + (n+3)s, no sólo (n+3)s. dim(M_J=0) 1016→1064; el dominio del remapeo se acorta ~49 a₀; convergencia y orientación apenas cambian |
 | `analysis_verificacion_tabla_I.md` | ⚠️ Tabla I del paper: 6/8 niveles concuerdan a ±0.004 GHz; sistemático real de 0.3 GHz en la serie s, localizado en δ₀(ns) |
-| `analysis_pseudopotencial_fermi_krb.md` | Pseudopotencial de Fermi s+p, remapeo k(R), dominancia frente al carga-dipolo |
 | `analysis_campo_electron_rydberg.md` | Campo del electrón Rydberg (Ec. A.6-A.10): expansión multipolar, 9 tests, validación contra cuadratura 2D, dominancia frente al ion |
 | `superpowers/specs/2026-08-18-refactor-estructura-design.md` | Diseño del refactor a paquete `trimero`: capas, ABC `Hamiltonian`, goldens y plan de 11 pasos. Incluye dos hallazgos medidos: bug de unidades ×1000 en `EhtoGHz` y coste de 34 días para `n1=35` |
+
+### Archivados — sistema de perturbador NEUTRO
+
+Técnicamente correctos, pero **no aplicables a Rb*-KRb** (que es polar y no
+lleva pseudopotencial de Fermi). Material de referencia si se retoma la línea
+de Aguilera-Fernández 2016. Cada uno lleva ya su aviso de premisa.
+
+| Documento | Contenido |
+|---|---|
+| `archive/rb_neutral_perturber/analysis_procedencia_rvsAS_rvsAP.md` | ⚠️ Punto abierto: procedencia de los `.dat` de entrada |
+| `archive/rb_neutral_perturber/analysis_extension_dominio_fig1.md` | ❌ **Extensión del dominio DESCARTADA con medida**: poner V_Fermi=0 más allá del remapeo mete un salto de 12-14 GHz (41-43 % de la ligadura). Incluye las curvas M_J=0 de n=24 y n=25 con base completa y las tres tendencias de la Fig. 1(a) |
+| `archive/rb_neutral_perturber/analysis_ventana_exclusion_resonancia.md` | ✅ **Cierre del bloque de la resonancia p**: ventana de exclusión `R ∈ [536.4, 589.1] a₀` con criterio calculado, verificación de que `inverse` no alteró nada fuera, tabla de características re-hecha y nota de limitación para manuscrito. Omont 1977 **no** implementado, por decisión |
+| `archive/rb_neutral_perturber/analysis_interpolacion_polo_Ap.md` | Interpolación de 1/A_p a través del polo; ⚠️ CORRIGE la conclusión de `analysis_resonancia_onda_p.md`: el pozo butterfly no era artefacto |
+| `archive/rb_neutral_perturber/analysis_resonancia_onda_p.md` | Resonancia de forma p: posición confirmada (24.8 vs 23 meV); ⚠️ su §6.2 está corregida — el pozo profundo NO era artefacto de interpolación |
+| `archive/rb_neutral_perturber/analysis_curva_bop_MJ0.md` | Curva BOP M_J=0: seguimiento adiabático vs diabático, y el butterfly de onda p (explicado ya como divergencia del rango cero) |
+| `archive/rb_neutral_perturber/analysis_pseudopotencial_fermi_krb.md` | Pseudopotencial de Fermi s+p, remapeo k(R), dominancia frente al carga-dipolo |
 
 ---
 

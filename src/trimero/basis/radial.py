@@ -20,11 +20,13 @@ control, porque (r/R)^k ≤ 1 dentro y (R/r)^k ≤ 1 fuera):
     G^k  = Gin_k + Gout_k
     Z^k  = [ -(k+1)·Gin_k + k·Gout_k ] / R
 
-APROXIMACIÓN ABIERTA (documentada): el estado 27s se representa con una función
-radial hidrogenoide de número cuántico principal efectivo entero n_eff = 24, en
-lugar de la función de Coulomb con n* = 27 - μ_s = 23.869. El error en la
-extensión radial es (24/23.869)² - 1 ≈ 1.1 %. La ENERGÍA del 27s sí usa el
-defecto cuántico exacto (`atom.Atom.E_Rb()`); sólo se aproxima la forma radial.
+APROXIMACIÓN ABIERTA (documentada): los niveles vecinos individuales —(n+3)s,
+(n+2)p, (n+1)d— se representan con hidrogenoides de número cuántico principal
+efectivo ENTERO, el más próximo a su n*, en lugar de funciones de Coulomb con n*
+no entero. Para n=24: 27s → n_eff=24 (n*=23.869), 26p → n_eff=23 (n*=23.351),
+25d → n_eff=24 (n*=23.654). El error en la extensión radial es del orden del
+1-3 %. La ENERGÍA de esos niveles sí usa el defecto cuántico exacto
+(`atom.Atom.E_Rb()`); sólo se aproxima la forma radial.
 `scipy.special.hyperu` resulta inestable (NaN) para l=0 con n* no entero, así
 que la función de Coulomb exacta queda pendiente.
 """
@@ -33,6 +35,8 @@ from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 from scipy.special import eval_genlaguerre, gammaln
+
+from trimero.systems.rb_krb_polar.rb_defects import n_star_nl, neighbor_levels
 
 __all__ = ["RadialBasis"]
 
@@ -44,15 +48,28 @@ class RadialBasis:
         self,
         n_manifold: int = 24,
         l_min: int = 3,
-        l_max: int = 23,
-        n_s_eff: int = 24,
+        l_max: int = None,
+        neighbor_l=(0, 1, 2),
+        neighbor_n_eff: Dict[int, int] = None,
         r_max: float = 3500.0,
         n_points: int = 12000,
     ):
+        """
+        `neighbor_l` son los niveles individuales de la base: l=0 → (n+3)s,
+        l=1 → (n+2)p, l=2 → (n+1)d. Cada uno se representa por la hidrogenoide
+        del ENTERO más próximo a su n* (misma aproximación que se venía usando
+        para el 27s: n_eff = 24, no 27). `neighbor_n_eff` permite fijar esos
+        enteros a mano; si es None se calculan de los defectos cuánticos.
+        """
         self.n_manifold = n_manifold
         self.l_min = l_min
-        self.l_max = l_max
-        self.n_s_eff = n_s_eff
+        self.l_max = n_manifold - 1 if l_max is None else l_max
+        self.neighbor_l = tuple(sorted(neighbor_l))
+        if neighbor_n_eff is None:
+            levels = neighbor_levels(n_manifold)
+            neighbor_n_eff = {l: int(round(n_star_nl(levels[l], l)))
+                              for l in self.neighbor_l}
+        self.neighbor_n_eff = dict(neighbor_n_eff)
         self.r_max = r_max
         self.n_points = n_points
 
@@ -61,14 +78,20 @@ class RadialBasis:
         x = np.linspace(0.0, np.sqrt(r_max), n_points)
         self.r = x * x
 
-        self.l_values: List[int] = [0] + list(range(l_min, l_max + 1))
+        self.l_values: List[int] = list(self.neighbor_l) + list(
+            range(l_min, self.l_max + 1))
         self._u_cache: Dict[int, np.ndarray] = {}
         self._parts_cache: Dict[Tuple[int, int, float], Tuple[np.ndarray, np.ndarray, tuple]] = {}
+
+    @property
+    def n_s_eff(self) -> int:
+        """n entero de la radial del ns. Se conserva por compatibilidad."""
+        return self.neighbor_n_eff[0]
 
     # -- funciones de onda ---------------------------------------------
     def n_of_l(self, l: int) -> int:
         """Número cuántico principal (efectivo) asociado a cada l de la base."""
-        return self.n_s_eff if l == 0 else self.n_manifold
+        return self.neighbor_n_eff.get(l, self.n_manifold)
 
     def u(self, l: int) -> np.ndarray:
         """u_{n(l),l}(r) = r·R_{n(l),l}(r), normalizada: ∫u² dr = 1."""
