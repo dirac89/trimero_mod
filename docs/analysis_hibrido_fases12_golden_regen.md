@@ -65,8 +65,23 @@ max|Δ| = 2.639e−11 GHz.
 Backup del golden viejo:
 `/var/folders/.../opencode/wigner_fix/fig1_ad_MJ0_n25_OLD.npz` (temporal).
 
-⚠️ **Pendiente**: `fig1_ad_MJ1_n25.npz` NO se regeneró (sigue con precisión vieja;
-inconsistente con el MJ0 nuevo). Decidir si regenerarlo.
+### Golden M_J=1 (`fig1_ad_MJ1_n25.npz`) — regenerado también
+
+Mismo procedimiento (mismo script con M_J=1), backup viejo en temp
+`fig1_ad_MJ1_n25_OLD.npz`. Resultados: **232/281 puntos difieren bit a bit**,
+max|ΔE| = 2.640e−11 GHz (rel máx 7.006e−12), **K idéntico en todos los puntos**,
+max|ΔW| = 1.64e−13, spectrum max|Δ| = 4.780e−11 GHz. Misma naturaleza: mejora de
+redondeo sin cambio de carácter ni de física.
+
+| R (a₀) | E_old (GHz) | E_new (GHz) | ΔE (GHz) |
+|---|---|---|---|
+| 400 | −19.014987950137 | −19.014987950147 | +1.0e−11 |
+| 600 | −16.705046860188 | −16.705046860207 | +1.9e−11 |
+| 800 | −16.191196929774 | −16.191196929796 | +2.2e−11 |
+| 1000 | −15.967210321051 | −15.967210321051 | 0 |
+| 1200 | −12.677384883122 | −12.677384883120 | −2.1e−12 |
+| 1500 | −1.429645045877 | −1.429645045877 | 0 |
+| 1800 | −0.276280619941 | −0.276280619939 | −1.4e−12 |
 
 ## 2. Verificación de los números documentados (§5 del fig1)
 
