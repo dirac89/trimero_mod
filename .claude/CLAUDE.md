@@ -158,6 +158,19 @@ Guardar en `docs/` con nomenclatura clara:
 - **rama de trabajo**: `migrate-python` (activa, para completar migración)
 - **Commits**: Mensajes claros en inglés o español, referencian la física si es relevante
 
+### 7. Qué NO se commitea
+- **`graphify-out/` NO se commitea.** Está en `.gitignore` y fue purgado del
+  histórico el 2026-08-21. Es un artefacto **derivado y regenerable**: sale de
+  `/graphify` a partir del propio repositorio, pesa ~2.8 MB en 100 ficheros y
+  se reescribe entero en cada reconstrucción, así que versionarlo sólo añadía
+  ruido y peso sin aportar nada que no se pueda regenerar.
+  - Se mantiene **en local**: no lo borres del disco, sólo no entra en git.
+  - Para regenerarlo tras un cambio grande de estructura: `/graphify`
+    (reconstrucción completa) o `/graphify . --update` (incremental).
+- **`plots/` SÍ se commitea**, y nunca va al `.gitignore`: las figuras y sus
+  `.npz` son resultados verificados, no artefactos regenerables baratos
+  (un barrido cuesta ~5 min de diagonalizaciones).
+
 ## Dependencias Principales
 
 | Librería | Versión | Propósito |

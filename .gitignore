@@ -9,3 +9,8 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Grafo de conocimiento: artefacto derivado y regenerable con /graphify.
+# Se mantiene en local, no se versiona (purgado del histórico el 2026-08-21).
+# Ver .claude/CLAUDE.md §7. Ojo: plots/ SÍ se versiona.
+graphify-out/
