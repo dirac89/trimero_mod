@@ -83,12 +83,12 @@ def parse_args():
     ap.add_argument("--step", type=float, default=5.0)
     ap.add_argument("--weight", type=float, default=0.5,
                     help="peso mínimo de manifold para aceptar la curva")
-    ap.add_argument("--npz-dir", default="plots",
+    ap.add_argument("--npz-dir", default="plots/rb_krb_polar",
                     help="dónde se guardan/leen los .npz de la curva")
     ap.add_argument("--reuse", action="store_true",
                     help="reutiliza el .npz si existe, en vez de rebarrer R")
     ap.add_argument("--out", default=None,
-                    help="PNG de salida (por defecto plots/fig1_ad_MJ<..>_n<n>.png)")
+                    help="PNG de salida (por defecto plots/rb_krb_polar/fig1_ad_MJ<..>_n<n>.png)")
     ap.add_argument("--no-plot", action="store_true")
     ap.add_argument("--ymin", type=float, default=-25.0)
     ap.add_argument("--ymax", type=float, default=1.0)

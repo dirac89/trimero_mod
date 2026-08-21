@@ -78,7 +78,7 @@ trimero_mod/
 ├── data/Wavefunction/                # Archivos de entrada
 ├── docs/STATUS.md                    # ← la física vigente, en una página
 ├── docs/archive/                     # material del otro sistema
-├── plots/                            # sólo lo vigente
+├── plots/{rb_krb_polar,rb_neutral_perturber}/  # espejo de systems/, lo vigente
 ├── pyproject.toml                    # Dependencias (Poetry)
 └── ...
 ```

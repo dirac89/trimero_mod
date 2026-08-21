@@ -49,6 +49,8 @@ src/trimero/
     └── rb_neutral_perturber/
         ├── fermi_krb.py         ScatteringLengths, FermiPseudopotential
         │                        (vectorizado, sobre CoupledBasis)
+        ├── linear_trimer.py     SymmetricLinearTrimer — H = H₀ + F·r + V₁ + V₂
+        │                        del trímero lineal simétrico. CAPA MODERNA
         ├── fermi_potentials.py  FermiPotentials  ── legado, golden files
         └── trimer.py            Trimer_energies_field  ── legado, golden files
 ```
@@ -71,12 +73,17 @@ rb_krb_polar/charge_dipole.py         → basis.{quantum,radial} · mathlib.angu
 rb_krb_polar/rb_defects.py            → systems.rb_atom
 rb_neutral_perturber/fermi_krb.py     → basis.{quantum,radial}
                                         rb_krb_polar.rb_defects                 ⚠️
+rb_neutral_perturber/linear_trimer.py → basis.{quantum,radial} · systems.rb_atom
+                                        rb_krb_polar.rb_defects                 ⚠️
+                                        rb_neutral_perturber.fermi_krb
 rb_neutral_perturber/fermi_potentials → mathlib.{laplacian,special}
 rb_neutral_perturber/trimer.py        → systems.rb_atom
                                         rb_neutral_perturber.fermi_potentials
 ```
 
-Las tres ⚠️ son deuda conocida y documentada, no descuidos. Ver abajo.
+Las cuatro ⚠️ son la MISMA deuda (`rb_defects` mezcla física atómica de Rb
+con la composición de la base del paper polar), conocida y documentada, no
+descuidos. Ver abajo.
 
 ## El camino vigente: Rb\*-KRb
 
@@ -140,6 +147,12 @@ un factor de unidades en `EhtoGHz` y una asimetría de la matriz.
 ⚠️ **No refactorices este camino «de paso».** Cualquier cambio que altere un
 golden es un cambio de física, y hay que tratarlo como tal.
 
+**La capa moderna equivalente es `linear_trimer.py`**, que resuelve el mismo
+sistema físico sobre `CoupledBasis(N_max=0)` y sin tres bugs de datos que el
+legado arrastra (`rvsDR38s.dat` × 10⁻⁶, desalineación de mallas 780 vs 776
+filas, `EhtoGHz` × 10³). Los tres están documentados en
+`docs/analysis_trimero_lineal_campo_dc.md` §7. Física nueva va ahí, no aquí.
+
 ## Tests
 
 ```
@@ -149,27 +162,32 @@ tests/
 └── systems/
     ├── rb_krb_polar/              charge_dipole, rydberg_field, bop_system,
     │                              regression_fig1
-    └── rb_neutral_perturber/      fermi_krb + characterization/ (goldens)
+    └── rb_neutral_perturber/      fermi_krb, linear_trimer (T1-T9 analíticos),
+                                   regression_trimer_2016 (anclas del paper),
+                                   characterization/ (goldens del legado)
 ```
 
-**48 tests.** `poetry run pytest` completo tarda ~6 min (los `slow` son los
+**77 tests.** `poetry run pytest` completo tarda ~6 min (los `slow` son los
 goldens end-to-end del legado). Para iterar: `pytest -m "not slow"`, ~25 s.
 
 `tests/systems/rb_krb_polar/test_regression_fig1.py` ancla los números
 verificados de la Fig. 1 (n=25, M_J=0): profundidad −23.100 GHz, E(1800 a₀) =
-−0.338 GHz, 8 mínimos locales, contra `plots/fig1_ad_MJ0_n25.npz`.
+−0.338 GHz, 8 mínimos locales, contra `plots/rb_krb_polar/fig1_ad_MJ0_n25.npz`.
 
 ## Datos y artefactos
 
 | ruta | qué |
 |---|---|
 | `data/Wavefunction/` | `.dat` de entrada. `rvsAS`/`rvsAP` son longitudes de dispersión: **insumo exclusivo del perturbador neutro** |
-| `plots/` | sólo lo vigente: `fig1_ad_MJ0_MJ1_n25.png` y los dos `.npz` que lo respaldan |
-| `plots/archive/` | figuras y datos de rondas superadas |
+| `plots/rb_krb_polar/` | lo vigente del sistema polar: `fig1_ad_*` y sus `.npz` |
+| `plots/rb_neutral_perturber/` | lo vigente del neutro: `trimer_lineal_*` y sus `.npz` |
+| `plots/archive/<sistema>/` | figuras y datos de rondas superadas, divididos por sistema |
 | `docs/` | los 5 documentos de referencia activa + `STATUS.md` |
 | `docs/archive/rb_neutral_perturber/` | la saga del pseudopotencial: correcta, pero de otro sistema |
 
-⚠️ `graphify-out/` y `plots/` **van siempre al commit**, nunca al `.gitignore`.
+⚠️ `plots/` **va siempre al commit**, nunca al `.gitignore`. El árbol de
+`plots/` **espeja `src/trimero/systems/`**: un subdirectorio por sistema físico.
+`graphify-out/` NO se commitea (ver CLAUDE.md §7).
 
 ## Invariantes
 
@@ -212,7 +230,14 @@ los autovectores, así que la curva BOP no puede usarlo.
 
 - **Otro manifold**: `--n-manifold`. No hay nada cableado a n=24 ni n=25.
 - **Otro término en H_mol**: `ChargeDipoleHamiltonian` en `charge_dipole.py`.
-- **Retomar el perturbador neutro**: el código está verde en
-  `rb_neutral_perturber/`; lo que falta es el barrido de producción
-  (`compute_bop_curve.py --system neutral` lanza `NotImplementedError` con las
-  indicaciones). Material de referencia en `docs/archive/rb_neutral_perturber/`.
+- **Perturbador neutro, geometría lineal simétrica**: hecho y validado contra
+  Aguilera-Fernández 2016. `scripts/compute_trimer_curves.py`. Ver
+  `docs/analysis_trimero_lineal_campo_dc.md`.
+- **Otras geometrías del trímero** (asimétrica §III.B, planar §IV del paper):
+  toda la geometría está encapsulada en `SymmetricLinearTrimer.parity_factor`.
+  Extenderla es sustituir ese factor por los armónicos esféricos evaluados en
+  cada θᵢ, con `A_s`/`A_p` propios de cada `R_i` (ya no comparten valor).
+  El resto —base, campo, cero de energía— no cambia.
+- **`compute_bop_curve.py --system neutral`** sigue lanzando
+  `NotImplementedError`: ese camino era la curva BOP tipo Rb*-KRb, no el
+  trímero. El barrido del trímero es `compute_trimer_curves.py`.

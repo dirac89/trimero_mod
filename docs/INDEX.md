@@ -3,7 +3,7 @@
 Este directorio contiene toda la documentación de investigación, análisis teórico y notas científicas del proyecto. El repositorio cubre **dos sistemas físicos distintos** —Rb*-KRb
 polar y perturbador neutro—; ver `STATUS.md` para la separación.
 
-**Última actualización**: 2026-08-20
+**Última actualización**: 2026-08-21
 
 > **Empieza por [`STATUS.md`](STATUS.md)** — estado vigente del proyecto en una
 > página. Este índice es el catálogo completo; `STATUS.md` dice qué es actual.
@@ -51,11 +51,18 @@ polar y perturbador neutro—; ver `STATUS.md` para la separación.
 | `analysis_campo_electron_rydberg.md` | Campo del electrón Rydberg (Ec. A.6-A.10): expansión multipolar, 9 tests, validación contra cuadratura 2D, dominancia frente al ion |
 | `superpowers/specs/2026-08-18-refactor-estructura-design.md` | Diseño del refactor a paquete `trimero`: capas, ABC `Hamiltonian`, goldens y plan de 11 pasos. Incluye dos hallazgos medidos: bug de unidades ×1000 en `EhtoGHz` y coste de 34 días para `n1=35` |
 
+### Vigentes — sistema de perturbador NEUTRO
+
+| Documento | Contenido |
+|---|---|
+| `analysis_trimero_lineal_campo_dc.md` | 🟢 **EL CÁLCULO BUENO para el perturbador neutro**: trímero lineal simétrico Rb(5s)Rb(35,l≥3)Rb(5s) en campo DC, validado contra Aguilera-Fernández 2016 con 6 anclas cuantitativas dentro del 3 %. Establece que la simetría es `m_l` (no M_J), que los dos perturbadores son un factor de paridad, y que n=35 lee las tablas sin remapeo. Documenta 3 bugs de datos del legado |
+
 ### Archivados — sistema de perturbador NEUTRO
 
-Técnicamente correctos, pero **no aplicables a Rb*-KRb** (que es polar y no
-lleva pseudopotencial de Fermi). Material de referencia si se retoma la línea
-de Aguilera-Fernández 2016. Cada uno lleva ya su aviso de premisa.
+Escritos cuando se creía que el pseudopotencial aplicaba a Rb*-KRb. Técnicamente
+correctos pero con esa premisa; **no aplicables al sistema polar**. Siguen
+siendo la referencia de la derivación del pseudopotencial y de la procedencia de
+los datos, ahora usada por `analysis_trimero_lineal_campo_dc.md`.
 
 | Documento | Contenido |
 |---|---|

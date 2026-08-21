@@ -1,6 +1,6 @@
 # Estado vigente del proyecto
 
-**Fecha**: 2026-08-20 · **Autor**: Javier Aguilera
+**Fecha**: 2026-08-21 · **Autor**: Javier Aguilera
 
 Documento corto y de entrada. Lo que no esté aquí, o no esté enlazado desde
 aquí, no es referencia activa.
@@ -14,7 +14,60 @@ desde la reorganización del 2026-08-20 (`docs/archive/analysis_reorganizacion_2
 | perturbador | KRb, **polar** | átomo/molécula **neutra** |
 | interacción | carga-dipolo, `-d·F_ryd` | dispersión de contacto, pseudopotencial de Fermi |
 | referencia | Aguilera-Fernández 2015 / González-Férez 2015 | Aguilera-Fernández 2016 |
-| estado | **vigente** | código verde, línea en pausa |
+| estado | **vigente** | **vigente desde 2026-08-21** (§ abajo) |
+
+---
+
+## Perturbador neutro: el modelo vigente
+
+**La línea dejó de estar en pausa el 2026-08-21.** Se aplicó por fin al paper
+para el que se escribió, Aguilera-Fernández, Schmelcher & González-Férez,
+*J. Phys. B* **49**, 124002 (2016), y lo reproduce.
+
+```
+H = H₀ + F·r + V(r,R₁) + V(r,R₂)          F = F·Ẑ
+V(r,Rᵢ) = 2π A_s[k(Rᵢ)] δ³(r−Rᵢ) + 6π A_p[k(Rᵢ)] ∇⃖δ³(r−Rᵢ)∇⃗
+```
+
+Geometría **lineal simétrica**: dos átomos neutros de Rb en θ=0 y θ=π a la
+misma distancia R del core. Base: manifold Rb(n=35, l≥3) + 38s + 37p + 36d.
+
+Tres cosas que hay que saber antes de tocar nada:
+
+1. **El buen número cuántico es `m_l`, no `M_J`.** Aquí no hay rotor: M_N ≡ 0.
+   Σ ≡ m_l=0, Π ≡ |m_l|=1, y para |m_l| ≥ 2 el pseudopotencial es idénticamente
+   cero. H es bloque-diagonal en m_l **incluso con campo**.
+2. **Los dos perturbadores se reducen a un factor `1 + (−1)^{l₁+l₂}`**, por
+   paridad. De ahí sale la estructura gerade/ungerade, y de ahí que el campo
+   (Δl=±1) sea lo único que la rompe.
+3. **n=35 es el manifold NATIVO de `rvsAS.dat`/`rvsAP.dat`** (su R máximo,
+   2448 a₀, es el punto de retorno clásico 2n²=2450). **No hay remapeo k(R)**,
+   ni ventana de exclusión, ni tope de dominio: se evalúa en los nodos de la
+   tabla, sin interpolar A_s ni A_p.
+
+```bash
+poetry run python scripts/compute_trimer_curves.py --symmetry Sigma
+poetry run python scripts/compute_trimer_curves.py --symmetry Pi
+```
+
+Anclas verificadas contra el texto del paper, que
+`tests/systems/rb_neutral_perturber/test_regression_trimer_2016.py` protege:
+
+| magnitud | paper | calculado |
+|---|---|---|
+| cruce Π sin campo | ≈1060 a₀ | **1060.5 a₀** |
+| mínimo de la Π más baja | ≈1115 a₀ | **1116 a₀** (−34.267 GHz) |
+| su Stark a F=500 V/m | 0.3 GHz | **−0.244 GHz** |
+| Rb(5s)Rb(38s)Rb(5s) | ≈−20 GHz | **−20.267 GHz**, Stark ∝ F² |
+| cruces evitados Σ | ≈1500 a₀ | **1503 / 1524 / 1557 a₀** |
+
+Detalle completo, aproximaciones y los tres bugs de datos del legado que se
+encontraron por el camino: [`analysis_trimero_lineal_campo_dc.md`](analysis_trimero_lineal_campo_dc.md).
+
+Lo que **no** está hecho: las geometrías **asimétrica** (§III.B) y **planar**
+(§IV) del paper, y el tramo R > 2448 a₀ (exigiría extrapolar A_s/A_p a k→0).
+`trimer.py` y `fermi_potentials.py` siguen **congelados** por los golden files;
+no se extienden, se replica en la capa moderna (`linear_trimer.py`).
 
 ---
 
@@ -121,6 +174,7 @@ Rb*-KRb.
 | [`analysis_verificacion_tabla_I.md`](analysis_verificacion_tabla_I.md) | δ₀(ns) = 3.13180 y su justificación completa |
 | [`analysis_validacion_carga_dipolo.md`](analysis_validacion_carga_dipolo.md) | `B·N²` + campo del ion: derivación, 4 tests analíticos, escalado 1/R⁴ |
 | [`analysis_campo_electron_rydberg.md`](analysis_campo_electron_rydberg.md) | campo del electrón Rydberg (Ec. A.6–A.10): expansión multipolar, validación contra cuadratura 2D |
+| [`analysis_trimero_lineal_campo_dc.md`](analysis_trimero_lineal_campo_dc.md) | **el otro sistema**: trímero lineal simétrico en campo DC, validado contra Aguilera-Fernández 2016 |
 
 Números de referencia verificados (n=25, M_J=0, R ∈ [400, 1800] a₀, paso 5 a₀),
 que `tests/systems/rb_krb_polar/test_regression_fig1.py` protege:
@@ -140,3 +194,5 @@ que `tests/systems/rb_krb_polar/test_regression_fig1.py` protege:
 - Marinescu, M., Sadeghpour, H. R. & Dalgarno, A., *Phys. Rev. A* **49**, 982 (1994).
 - Li, W., Mourachko, I., Noel, M. W. & Gallagher, T. F., *Phys. Rev. A* **67**,
   052502 (2003) — defectos cuánticos por defecto del código.
+- Aguilera-Fernández, J., Schmelcher, P. & González-Férez, R., *J. Phys. B*
+  **49**, 124002 (2016), arXiv:1601.05049 — el sistema del perturbador neutro.

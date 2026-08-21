@@ -252,7 +252,18 @@ class ScatteringLengths:
         return float(np.sqrt(val)) if val > 0.0 else float("nan")
 
     def remap_R_from_energy(self, R: float, E: float) -> float:
-        """R' en la tabla n=35 con el mismo k. Inf si no hay solución."""
+        """
+        R' en la tabla n=35 con el mismo k. Inf si no hay solución.
+
+        Si la energía pedida ES la de la tabla (caso n*=35, el manifold para el
+        que se generó), el remapeo es la IDENTIDAD algebraica R' = 1/(1/R) = R.
+        Se cortocircuita para devolver R exactamente: sin el atajo, la ida y
+        vuelta en coma flotante mueve el extremo R=2448 fuera de la tabla por
+        1 ulp y `scattering_from_energy` lo rechazaría. No es un cambio de
+        física, es evitar reconstruir un número que ya se tiene.
+        """
+        if E == self.E_table:
+            return float(R)
         denom = E + 1.0 / R - self.E_table
         return float(1.0 / denom) if denom > 0.0 else float("inf")
 
@@ -372,11 +383,30 @@ class FermiPseudopotential:
                  s_wave: bool = True, p_wave: bool = True,
                  delta0_ns: float = None,
                  n_manifold: int = N_MANIFOLD_DEFAULT,
-                 n_s: int = None):
+                 n_s: int = None,
+                 uniform_n_star: float = None,
+                 radial_fn=None, dradial_fn=None):
+        """
+        `uniform_n_star`: si se da, TODOS los elementos de matriz usan ese n*
+            para evaluar k(R), en vez de la energía media del par (l1,l2).
+            Es el convenio del paper: A_s[k(R)], A_p[k(R)] con un único k por
+            R, el del número cuántico principal del estado Rydberg. Con
+            `uniform_n_star == scattering.n_star_table` el remapeo es la
+            identidad y la tabla se lee tal cual fue generada.
+
+        `radial_fn(l, R)` / `dradial_fn(l, R)`: reemplazan R_{n(l),l}(R) y su
+            derivada por funciones externas. Sirven para inyectar funciones de
+            Coulomb tabuladas para los niveles vecinos, cuyo n* no es entero y
+            que la hidrogenoide de n entero sólo aproxima en amplitud (la fase
+            se desvía). None -> hidrogenoide, comportamiento de siempre.
+        """
         self.radial = radial
         self.scattering = scattering
         self.s_wave = s_wave
         self.p_wave = p_wave
+        self.uniform_n_star = uniform_n_star
+        self.radial_fn = radial_fn
+        self.dradial_fn = dradial_fn
         # None -> n* del ns tal como está en rb_atom.py. Ver systems/rb_krb_polar/rb_defects.py
         self.delta0_ns = delta0_ns
         # Manifold sobre el que se evalúa k(R). Por defecto n=24 + 27s.
@@ -448,6 +478,18 @@ class FermiPseudopotential:
         # flotante y `scattering_from_energy` lo rechazaría por el borde.
         return float(R_min * (1.0 + 1e-9)), float(R_max * (1.0 - 1e-9))
 
+    def R_of(self, l: int, R: float) -> float:
+        """R_{n(l),l}(R) en el punto del perturbador."""
+        if self.radial_fn is not None:
+            return float(self.radial_fn(l, R))
+        return float(hydrogenic_R(self.radial.n_of_l(l), l, R))
+
+    def dR_of(self, l: int, R: float) -> float:
+        """dR_{n(l),l}/dr evaluada en el punto del perturbador."""
+        if self.dradial_fn is not None:
+            return float(self.dradial_fn(l, R))
+        return float(hydrogenic_dR(self.radial.n_of_l(l), l, R))
+
     def electron_element(self, l1: int, m1: int, l2: int, m2: int, R: float) -> float:
         """⟨l₁ m₁| V |l₂ m₂⟩, parte electrónica."""
         if m1 != m2 or abs(m1) > 1:
@@ -457,22 +499,24 @@ class FermiPseudopotential:
         if hit is not None:
             return hit
 
-        A_s, A_p = self.scattering.scattering_pair(
-            R, self.n_star_of_l(l1), self.n_star_of_l(l2)
-        )
-        n1, n2 = self.radial.n_of_l(l1), self.radial.n_of_l(l2)
+        if self.uniform_n_star is not None:
+            A_s, A_p = self.scattering.scattering(R, self.uniform_n_star)
+        else:
+            A_s, A_p = self.scattering.scattering_pair(
+                R, self.n_star_of_l(l1), self.n_star_of_l(l2)
+            )
         norm = np.sqrt((2.0 * l1 + 1.0) * (2.0 * l2 + 1.0))
         val = 0.0
         if m1 == 0:
             if self.s_wave:
-                val += 0.5 * A_s * hydrogenic_R(n1, l1, R) * hydrogenic_R(n2, l2, R) * norm
+                val += 0.5 * A_s * self.R_of(l1, R) * self.R_of(l2, R) * norm
             if self.p_wave:
-                val += 1.5 * A_p * hydrogenic_dR(n1, l1, R) * hydrogenic_dR(n2, l2, R) * norm
+                val += 1.5 * A_p * self.dR_of(l1, R) * self.dR_of(l2, R) * norm
         else:
             if self.p_wave:
                 val += (
                     0.75 * A_p
-                    * hydrogenic_R(n1, l1, R) * hydrogenic_R(n2, l2, R) / (R * R)
+                    * self.R_of(l1, R) * self.R_of(l2, R) / (R * R)
                     * np.sqrt(l1 * (l1 + 1.0) * l2 * (l2 + 1.0)) * norm
                 )
         val = float(val)

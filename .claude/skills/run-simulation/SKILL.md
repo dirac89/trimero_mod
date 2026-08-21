@@ -44,7 +44,7 @@ Solicita al usuario (si no están claros en la solicitud):
    ```
 
 3. Monitorea la ejecución y reporta:
-   - Archivos generados (`plots/fig1_ad_MJ*_n*.npz` + PNG, o
+    - Archivos generados (`plots/rb_krb_polar/fig1_ad_MJ*_n*.npz` + PNG, o
      `Trimer_R_sp_wave_*.dat` en el legado)
    - Número de puntos computados
    - Rango de energías resultantes

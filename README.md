@@ -73,8 +73,12 @@ trimero_mod/
 │                                 SÓLO los usa el perturbador neutro
 ├── docs/                         5 documentos de referencia activa + STATUS.md
 │   └── archive/                      material del otro sistema físico
-├── plots/                        sólo lo vigente: 1 PNG + los 2 .npz que lo respaldan
-│   └── archive/                      11 figuras y datos de rondas superadas
+├── plots/                        espejo de systems/: un subdirectorio por sistema
+│   ├── rb_krb_polar/                 fig1_ad_* — lo vigente del sistema polar
+│   ├── rb_neutral_perturber/         trimer_lineal_* — lo vigente del neutro
+│   └── archive/
+│       ├── rb_krb_polar/             figuras y datos de rondas superadas (polar)
+│       └── rb_neutral_perturber/     ídem (neutro, era C++)
 │
 ├── graphify-out/                 grafo de conocimiento. LOCAL, NO SE VERSIONA
 │                                 (regenerable con /graphify; ver CLAUDE.md §7)
@@ -120,7 +124,7 @@ poetry run python scripts/compute_bop_curve.py --n-manifold 25 --mj 0 1
 | `--mj` | `0 1` | bloques M_J a calcular (acepta varios) |
 | `--rmin` / `--rmax` / `--step` | `400` / `1800` / `5` | malla en R, en a₀ |
 | `--weight` | `0.5` | peso mínimo de manifold para aceptar la curva |
-| `--npz-dir` | `plots` | dónde se guardan/leen los `.npz` |
+| `--npz-dir` | `plots/rb_krb_polar` | dónde se guardan/leen los `.npz` |
 | `--reuse` | — | reutiliza el `.npz` si existe en vez de rebarrer R |
 | `--no-plot` / `--out` | — | omitir la figura / cambiar su ruta |
 | `--ymin` / `--ymax` | `-25` / `1` | límites del eje de energía en la figura |
@@ -154,7 +158,7 @@ asintóticos y la forma de la curva:
       mínimos locales     : 8
 ```
 
-En disco, `plots/fig1_ad_MJ<M_J>_n<n>.npz` con cinco arrays:
+En disco, `plots/rb_krb_polar/fig1_ad_MJ<M_J>_n<n>.npz` con cinco arrays:
 
 | clave | forma | qué es |
 |---|---|---|
@@ -171,7 +175,7 @@ carácter en negro y los umbrales rotacionales.
 
 ```python
 import numpy as np
-d = np.load("plots/fig1_ad_MJ0_n25.npz")
+d = np.load("plots/rb_krb_polar/fig1_ad_MJ0_n25.npz")
 R, E, W = d["R"], d["E"], d["W"]
 
 print(f"pozo más profundo: {E.min():.3f} GHz en R = {R[E.argmin()]:.0f} a0")

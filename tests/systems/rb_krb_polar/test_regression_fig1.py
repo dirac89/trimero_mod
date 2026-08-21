@@ -1,7 +1,7 @@
 """
 Regresión de `scripts/compute_bop_curve.py` contra los números ya verificados.
 
-La referencia es `plots/fig1_ad_MJ0_n25.npz`, producida por el script archivado
+La referencia es `plots/rb_krb_polar/fig1_ad_MJ0_n25.npz`, producida por el script archivado
 `scripts/archive/run_fig1_charge_dipole.py` y documentada en
 `docs/analysis_fig1_carga_dipolo_sin_fermi.md` §5. Esos números están
 verificados de forma independiente, así que aquí son la fuente de verdad: si
@@ -28,7 +28,7 @@ import numpy as np
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
-REF = REPO / "plots" / "fig1_ad_MJ0_n25.npz"
+REF = REPO / "plots" / "rb_krb_polar" / "fig1_ad_MJ0_n25.npz"
 
 # Números de docs/analysis_fig1_carga_dipolo_sin_fermi.md §5, n=25, M_J=0.
 DOC_DEPTH_GHZ = -23.100

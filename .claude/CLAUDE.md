@@ -14,13 +14,17 @@ hay que saber; mezclarlos ya produjo varias rondas con premisa equivocada.
 | perturbador | KRb, **polar** | átomo/molécula **neutra** |
 | interacción | carga-dipolo, `−d·F_ryd` | pseudopotencial de Fermi (contacto) |
 | Hamiltoniano | `H_ad = H_A + H_mol` | `H = H_a + V_Fermi` |
-| estado | **vigente** | verde y congelado, línea en pausa |
+| estado | **vigente** | **vigente**: trímero lineal simétrico en campo DC |
 
 **El pseudopotencial de Fermi NO interviene en el sistema polar.** Si te ves
 añadiendo `V_Fermi` a una curva de Rb*-KRb, para y lee `docs/STATUS.md`.
 
+Y al revés: en el sistema neutro el buen número cuántico es **`m_l`**, no `M_J`
+(no hay rotor). Σ ≡ m_l=0, Π ≡ |m_l|=1.
+
 **Status**: migración C++ → Python completada; reorganizado por sistema físico
-el 2026-08-20. Rama: `migrate-python`.
+el 2026-08-20; línea del perturbador neutro reactivada y validada contra
+Aguilera-Fernández 2016 el 2026-08-21. Rama: `migrate-python`.
 
 ## Documentos de entrada
 
@@ -40,11 +44,13 @@ src/trimero/
 └── systems/
     ├── rb_atom.py                 Atom.E_Rb() — defectos cuánticos, COMPARTIDO
     ├── rb_krb_polar/              charge_dipole.py, bop_system.py, rb_defects.py
-    └── rb_neutral_perturber/      fermi_krb.py, fermi_potentials.py, trimer.py
+    └── rb_neutral_perturber/      fermi_krb.py, linear_trimer.py,
+                                   fermi_potentials.py + trimer.py (legado)
 
-scripts/compute_bop_curve.py       único script de producción
+scripts/compute_bop_curve.py       producción — Rb*-KRb polar
+scripts/compute_trimer_curves.py   producción — trímero lineal simétrico
 scripts/archive/                   los 12 scripts de exploración
-tests/{basis,systems}/             48 tests; goldens del legado en
+tests/{basis,systems}/             77 tests; goldens del legado en
                                    systems/rb_neutral_perturber/characterization/
 data/Wavefunction/                 .dat de entrada
 docs/                              referencia activa + STATUS.md
@@ -57,15 +63,20 @@ plots/                             sólo lo vigente; el resto en plots/archive/
 ```bash
 poetry install
 
-# Curvas BOP de Rb*-KRb (el camino vigente)
+# Curvas BOP de Rb*-KRb (sistema polar)
 poetry run python scripts/compute_bop_curve.py --n-manifold 25 --mj 0 1
+
+# Curvas del trímero lineal simétrico en campo DC (perturbador neutro)
+poetry run python scripts/compute_trimer_curves.py --symmetry Sigma
+poetry run python scripts/compute_trimer_curves.py --symmetry Pi
 
 # Tests: rápidos mientras iteras, completo antes de commitear
 poetry run pytest -m "not slow"    # ~25 s
 poetry run pytest                  # ~6 min, incluye los goldens del legado
 ```
 
-`compute_bop_curve.py` escribe `plots/fig1_ad_MJ<..>_n<n>.npz` y su PNG.
+`compute_bop_curve.py` escribe `plots/rb_krb_polar/fig1_ad_MJ<..>_n<n>.npz` y su PNG;
+`compute_trimer_curves.py`, `plots/rb_neutral_perturber/trimer_lineal_<SIM>_n<n>.npz` y su PNG.
 El camino legado (`Trimer_energies_field`) produce `Trimer_R_sp_wave_*.dat`.
 
 ## Reglas de Desarrollo
@@ -188,9 +199,11 @@ Guardar en `docs/` con nomenclatura clara:
   `systems/rb_krb_polar/charge_dipole.py`; el montaje de la base y el cero de
   energía en `bop_system.py`. Otro manifold es sólo `--n-manifold`: no hay nada
   cableado a n=24 ni n=25.
-- **Perturbador neutro**: `systems/rb_neutral_perturber/fermi_krb.py` (versión
-  vectorizada). El camino legado (`trimer.py`, `fermi_potentials.py`) está
-  **congelado**: no lo extiendas, replica en la capa moderna.
+- **Perturbador neutro**: `systems/rb_neutral_perturber/linear_trimer.py`
+  (`SymmetricLinearTrimer`) sobre `fermi_krb.py`. Toda la geometría está en
+  `parity_factor`: las configuraciones asimétrica y planar del paper se añaden
+  ahí. El camino legado (`trimer.py`, `fermi_potentials.py`) está **congelado**:
+  no lo extiendas, replica en la capa moderna.
 - **Matemáticas nuevas**: `mathlib/angular.py` (álgebra angular) o
   `mathlib/special.py` (funciones especiales). No metas contexto físico ahí.
 
