@@ -59,9 +59,24 @@ paneles dicen **V/cm**. Son incompatibles y la correcta es **V/m**:
 |---|---|---|
 | ensanchamiento Stark del manifold n=35 a F=500 | ±11.4 GHz | ±1142 GHz |
 | eje de las Figs. 4-5 | −20 … 0 GHz ✓ | ✗ fuera de escala ×50 |
-| límite de Inglis-Teller 1/(3n⁵) = 326 V/m | F=500 justo por encima → «several avoided crossings» ✓ | ✗ ×100 por encima |
+| límite de Inglis-Teller 1/(3n⁵) = 6.35·10⁻⁹ u.a. ≈ 3264 V/m | F=500 = 0.15·F_IT, subcrítico: abanicos Stark resueltos como en las Figs. 4-5 ✓ | ✗ F=500 V/cm = 15·F_IT, manifolds adyacentes solapados: esa estructura no sobreviviría |
 
 Los cálculos de este documento usan **V/m**.
+
+> **Corrección (2026-08-21)**: esta fila decía antes «1/(3n⁵) = 326 V/m …
+> F=500 justo por encima». El número llevaba un deslizamiento de factor 10:
+> con n=35 y 1 u.a. = 5.14220674763·10¹¹ V/m, F_IT = 6.3466·10⁻⁹ u.a. =
+> **3264 V/m (32.6 V/cm)**; con la convención de semianchura igual a la
+> separación inter-manifold (~147 GHz) el umbral sube a ≈6400 V/m. Consecuencia:
+> **F=500 V/m está claramente POR DEBAJO del límite (×6.5), no justo por
+> encima**, y bajo lectura V/cm estaría ×15 por encima. La elección V/m se
+> mantiene por las dos primeras filas, que son mediciones directas. Los
+> «several avoided crossings» del paper son cruces en R entre APC individuales
+> y niveles vestidos (§III.A), no un efecto de solape de manifolds: este
+> cálculo los reproduce a 0.15·F_IT sin contradicción. El paper no menciona
+> Inglis-Teller en ningún punto (verificado contra el texto completo, ar5iv);
+> nótese además que su propia §III.2 rotula «300 V/cm y 500 V/cm», mientras
+> III.1 y los pies de figura dicen V/m.
 
 ## 2. El Hamiltoniano del paper y su correspondencia con el código
 

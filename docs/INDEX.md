@@ -49,6 +49,8 @@ polar y perturbador neutro—; ver `STATUS.md` para la separación.
 | `analysis_base_correcta_3_vecinos.md` | ⚠️ **CORRIGE la base electrónica de toda la sesión**: el paper usa manifold + (n+1)d + (n+2)p + (n+3)s, no sólo (n+3)s. dim(M_J=0) 1016→1064; el dominio del remapeo se acorta ~49 a₀; convergencia y orientación apenas cambian |
 | `analysis_verificacion_tabla_I.md` | ⚠️ Tabla I del paper: 6/8 niveles concuerdan a ±0.004 GHz; sistemático real de 0.3 GHz en la serie s, localizado en δ₀(ns) |
 | `analysis_campo_electron_rydberg.md` | Campo del electrón Rydberg (Ec. A.6-A.10): expansión multipolar, 9 tests, validación contra cuadratura 2D, dominancia frente al ion |
+| `analysis_wigner3j_orden_canonico.md` | 🔧 **Arreglo de `wigner_3j` (orden canónico)**: causa raíz de la asimetría de hermiticidad a n=35 (2.8e−13 → 3.0e−19 rel). Simetría bit a bit bajo permutaciones y volteo de m, validado contra Racah racional exacto |
+| `analysis_hibrido_fases12_golden_regen.md` | ✅ **Cierre de la ronda wigner + Fases 1-2 del híbrido**: golden `fig1_ad_MJ0_n25.npz` regenerado (Opción A; mejora de precisión 1.12×, no corrección de física; tabla old→new), números de §5 verificados, NaN de `dg_integrals` diagnosticado como uso fuera de dominio (0 en producción), y primeras curvas E0(R2) del sistema Rb*-Rb-RbCs a R1∈{600,900,1100} a₀ (`scripts/compute_hybrid_curves.py`). ⚠️ Pendiente: regenerar `fig1_ad_MJ1_n25.npz` |
 | `superpowers/specs/2026-08-18-refactor-estructura-design.md` | Diseño del refactor a paquete `trimero`: capas, ABC `Hamiltonian`, goldens y plan de 11 pasos. Incluye dos hallazgos medidos: bug de unidades ×1000 en `EhtoGHz` y coste de 34 días para `n1=35` |
 
 ### Vigentes — sistema de perturbador NEUTRO
