@@ -141,7 +141,7 @@ es garantía) y convergencia en N_max.
 ## Conclusiones y plan
 
 1. Descartar como física las tres curvas E0(R2) de
-   `plots/hybrid_neutral_polar/hybrid_curves_R1*.npz`: trazaban el umbral
+   `plots/hybrid_neutral_polar/data/hybrid_curves_R1*.npz`: trazaban el umbral
    37p. No borrarlas (son consistentes como datos), pero reetiquetar o
    regenerar con el criterio de carácter.
 2. Modificar `scripts/compute_hybrid_curves.py`: seleccionar por peso de

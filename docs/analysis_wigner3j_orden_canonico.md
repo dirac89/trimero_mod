@@ -131,7 +131,7 @@ polar rápido (fig1 R1 + rydberg_field + cd)    14 passed, 1 failed (ver abajo)
 ## ⚠️ Desviación pendiente de decisión: fig1 R2
 
 El test lento `test_r2_compute_bop_curve_reproduces_the_reference` exige
-reproducir el golden `plots/rb_krb_polar/fig1_ad_MJ0_n25.npz` con
+reproducir el golden `plots/rb_krb_polar/data/fig1_ad_MJ0_n25.npz` con
 `rtol=1e-12` ("bit a bit"). El golden se generó con el `wigner_3j` VIEJO; el
 nuevo es más preciso y mueve los autovalores por encima de esa tolerancia
 ultra-estricta:

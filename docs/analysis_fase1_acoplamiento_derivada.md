@@ -23,7 +23,7 @@ Se verificaron, en este orden y ANTES de aceptar el módulo:
 2. Diagonal nula (idem).
 3. Acoplamiento pequeño y suave lejos de cruces, con un sistema real.
 4. Pico de acoplamiento en un cruce evitado real, ya documentado en el
-   proyecto (`plots/rb_krb_polar/fig1_ad_MJ0_n25.npz`).
+   proyecto (`plots/rb_krb_polar/data/fig1_ad_MJ0_n25.npz`).
 5. Convergencia con el paso de diferencias finitas (orden 2, verificado).
 
 Los 11 tests están en verde. Ningún test se relajó para acomodar un resultado
@@ -55,7 +55,7 @@ R0=10.0 el pico exacto en R0 es |A_12(R0)| = k/(2c) = 0.1.
 
 ### Cruce evitado real usado en el test (d)
 
-`plots/rb_krb_polar/fig1_ad_MJ0_n25.npz` (barrido de producción,
+`plots/rb_krb_polar/data/fig1_ad_MJ0_n25.npz` (barrido de producción,
 `n_manifold=25`, `M_J=0`, sin Fermi, paso 5 a₀) registra que el índice k de
 la curva de carácter de manifold cambia de 54 a 55 cerca de R=1300 a₀. Un
 escaneo fino del hueco de energía w[55]-w[54] (paso 5 a₀ entre R=1270 y
@@ -197,7 +197,7 @@ decidir el nuevo criterio, según la disciplina de este documento maestro.
 - Mellado-Alcedo, Guttridge, Cornish, Sadeghpour & González-Férez,
   *Phys. Rev. A* **110**, 013314 (2024), arXiv:2401.09618 — Ec. 1-4 y 8, el
   paper que se está replicando para Rb*-RbCs.
-- `plots/rb_krb_polar/fig1_ad_MJ0_n25.npz` — datos de producción donde se
+- `plots/rb_krb_polar/data/fig1_ad_MJ0_n25.npz` — datos de producción donde se
   localizó el cruce evitado real usado en el test (d).
 - `docs/STATUS.md` §"Identificación de la curva: por CARÁCTER, no por
   índice" — el precedente cualitativo que este documento cuantifica.

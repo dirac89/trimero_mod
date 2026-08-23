@@ -180,5 +180,5 @@ def main(npz_path, out_npz):
 if __name__ == "__main__":
     import sys
     npz_path = sys.argv[1] if len(sys.argv) > 1 else "fase6_sweep_n25_MJ0_states54_55.npz"
-    out = sys.argv[2] if len(sys.argv) > 2 else "plots/hybrid_neutral_polar/fase6_n25_results.npz"
+    out = sys.argv[2] if len(sys.argv) > 2 else "plots/hybrid_neutral_polar/data/fase6_n25_results.npz"
     main(npz_path, out)

@@ -101,8 +101,11 @@ def local_minima(y):
 def main():
     args = parse_args()
     mol = HybridNeutralPolar(n_manifold=args.n_manifold, N_max=args.n_max)
-    out_dir = Path("plots") / "hybrid_neutral_polar"
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_root = Path("plots") / "hybrid_neutral_polar"
+    data_dir = out_root / "data"
+    figures_dir = out_root / "figures"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
 
     print(RULE)
     print("Rb*(n=35)-Rb(5s,theta=pi)-RbCs(theta=0): curvas de CARÁCTER manifold")
@@ -228,11 +231,11 @@ def main():
         curves[R1] = {"R2": R2, "E": E, "K": K, "Wman": Wman,
                       "Wneigh": Wneigh, "overlap": OVL, "spectrum": SP}
         base = f"hybrid_caracter_R1{int(R1)}_n{args.n_manifold}_Nmax{args.n_max}"
-        np.savez(out_dir / f"{base}.npz",
+        np.savez(data_dir / f"{base}.npz",
                  R2=R2, E=E, K=K, Wman=Wman, Wneigh=Wneigh, overlap=OVL,
                  spectrum=SP, K_puntual=K_puntual, E_puntual=E_puntual,
                  R1=R1, M_J=args.mj, N_max=args.n_max, weight=args.weight)
-        print(f"    datos en {out_dir}/{base}.npz")
+        print(f"    datos en {data_dir}/{base}.npz")
 
     # ------------------------------------------------------------- figura
     fig, ax = plt.subplots(figsize=(7.4, 5.4))
@@ -254,7 +257,7 @@ def main():
     ax.grid(alpha=0.25)
     ax.legend(loc="best")
     fig.tight_layout()
-    png = out_dir / f"hybrid_curves_caracter_MJ{args.mj}_n{args.n_manifold}.png"
+    png = figures_dir / f"hybrid_curves_caracter_MJ{args.mj}_n{args.n_manifold}.png"
     fig.savefig(png, dpi=150)
     print(f"\n  PNG en {png}")
     print(RULE)

@@ -55,6 +55,7 @@ import numpy as np
 from trimero.basis.quantum import CoupledBasis, QuantumBasisBlock
 from trimero.basis.radial import RadialBasis
 from trimero.systems.rb_atom import Atom
+from trimero.systems.polar_molecule import RBCS
 from trimero.systems.hybrid_neutral_polar.parity import phase_pi
 from trimero.systems.rb_krb_polar.charge_dipole import (
     DEBYE_TO_EA0,
@@ -79,8 +80,8 @@ __all__ = ["GHZ_PER_HARTREE", "D_RBCS_DEBYE", "B_RBCS_MHZ",
 GHZ_PER_HARTREE = HZ_PER_HARTREE / 1.0e9
 
 # Parámetros moleculares del RbCs (estado vibracional de partida).
-D_RBCS_DEBYE = 1.225          # momento dipolar permanente, Debye
-B_RBCS_MHZ = 490.17           # constante rotacional, MHz
+D_RBCS_DEBYE = RBCS.dipole_debye
+B_RBCS_MHZ = RBCS.rotational_constant_hz / 1.0e6
 
 # Conversiones verificadas esta ronda (ver cabecera):
 D_RBCS_AU = D_RBCS_DEBYE * DEBYE_TO_EA0          # 0.481952126075 e·a₀
@@ -158,7 +159,7 @@ class HybridNeutralPolar:
             n_manifold=self.n_manifold, uniform_n_star=float(self.n_manifold),
             radial_fn=self._radial_fn, dradial_fn=self._dradial_fn)
         self.hmol = ChargeDipoleHamiltonian(
-            B=B_RBCS_AU, d=D_RBCS_AU,
+            B=self.B_au, d=self.d_au,
             electron_field=(RydbergElectronField(self.radial_basis)
                             if self.include_electron_field else None))
         self._blocks: Dict[tuple, np.ndarray] = {}

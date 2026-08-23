@@ -10,7 +10,8 @@ dos átomos neutros en θ=0 y θ=π a la misma distancia R del core.
     poetry run python scripts/compute_trimer_curves.py --symmetry Pi
     poetry run python scripts/compute_trimer_curves.py --fields 0 500 --s-wave-only
 
-Escribe `plots/rb_neutral_perturber/trimer_lineal_<SIM>_n<n>.npz` y su PNG. El .npz lleva `R`, `E`
+Escribe datos en `plots/rb_neutral_perturber/data/` y figuras en `figures/`.
+El .npz lleva `R`, `E`
 (GHz, relativa al manifold Rb(n,l≥3) sin campo), `W` (peso de manifold de cada
 autovector) y `fields_V_per_m`.
 
@@ -50,7 +51,7 @@ def parse_args():
     p.add_argument("--weight", type=float, default=0.5,
                    help="peso de manifold mínimo para dibujar una curva")
     p.add_argument("--outdir", type=Path, default=Path("plots/rb_neutral_perturber"),
-                   help="directorio de salida (por defecto plots/rb_neutral_perturber)")
+                   help="raíz de salida, con subdirectorios data/ y figures/")
     p.add_argument("--no-plot", action="store_true")
     return p.parse_args()
 
@@ -84,10 +85,13 @@ def main():
               f"mín(manifold) = {np.nanmin(vis):8.3f} GHz")
     E, W = np.array(E), np.array(W)
 
-    args.outdir.mkdir(parents=True, exist_ok=True)
+    data_dir = args.outdir / "data"
+    figures_dir = args.outdir / "figures"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
     tag = (f"trimer_lineal_{args.symmetry}_n{args.n_manifold}"
            f"{'_swave' if args.s_wave_only else ''}{'_dimer' if args.dimer else ''}")
-    npz = args.outdir / f"{tag}.npz"
+    npz = data_dir / f"{tag}.npz"
     np.savez_compressed(npz, R=R, E=E, W=W,
                         fields_V_per_m=np.array(args.fields),
                         n_manifold=args.n_manifold, m_l=m_l,
@@ -95,10 +99,10 @@ def main():
     print(f"-> {npz}")
 
     if not args.no_plot:
-        plot(args, trimer, R, E, W, tag)
+        plot(args, trimer, R, E, W, tag, figures_dir)
 
 
-def plot(args, trimer, R, E, W, tag):
+def plot(args, trimer, R, E, W, tag, figures_dir):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -125,7 +129,7 @@ def plot(args, trimer, R, E, W, tag):
         + ("  (sólo onda s)" if args.s_wave_only else "  (ondas s+p)")
     )
     fig.tight_layout()
-    png = args.outdir / f"{tag}.png"
+    png = figures_dir / f"{tag}.png"
     fig.savefig(png, dpi=150)
     print(f"-> {png}")
 

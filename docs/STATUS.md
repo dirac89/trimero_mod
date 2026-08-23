@@ -5,7 +5,7 @@
 Documento corto y de entrada. Lo que no esté aquí, o no esté enlazado desde
 aquí, no es referencia activa.
 
-El repositorio contiene **dos sistemas físicos distintos** que durante varias
+El repositorio contiene **dos líneas físicas históricas** que durante varias
 rondas estuvieron mezclados en el mismo espacio de nombres. Están separados
 desde la reorganización del 2026-08-20 (`docs/archive/analysis_reorganizacion_20260820.md`).
 
@@ -15,6 +15,11 @@ desde la reorganización del 2026-08-20 (`docs/archive/analysis_reorganizacion_2
 | interacción | carga-dipolo, `-d·F_ryd` | dispersión de contacto, pseudopotencial de Fermi |
 | referencia | Aguilera-Fernández 2015 / González-Férez 2015 | Aguilera-Fernández 2016 |
 | estado | **vigente** | **vigente desde 2026-08-21** (§ abajo) |
+
+Desde 2026-08-23, el núcleo carga–dipolo reutilizable vive además en
+`systems/polar_rydberg/`. `systems/rb_rbcs_polar/` define Rb\*+RbCs polar puro
+con `B=490.17 MHz`, `d=1.225 D`; comparte exactamente el Hamiltoniano de KRb y
+no lleva Fermi. Plan y estado de validación: [`PLAN_rb_rbcs_polar.md`](PLAN_rb_rbcs_polar.md).
 
 ---
 

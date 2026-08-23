@@ -223,7 +223,7 @@ invertir ese tiempo.
 - `scripts/analyze_nonadiabatic_n25_crossing_wide.py` (nuevo)
 - `docs/PLAN_nonadiabatic_dynamics.md` (ESTADO ACTUAL actualizado)
 - `docs/analysis_fase6b_ventana_ampliada.md` (este documento)
-- `plots/hybrid_neutral_polar/fase6b_n25_results.npz` (resultados: R_mid,
+- `plots/hybrid_neutral_polar/data/fase6b_n25_results.npz` (resultados: R_mid,
   A, B, W_mid, bound_summary, gammas)
 
 No se tocó ningún módulo de `src/trimero/` ni ningún test (el bug estaba en

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Curvas BOP de Rb*-KRb: único script de producción.
+Curvas BOP de Rb* unido a KRb o RbCs: script polar de producción.
 
 Sustituye a los doce `run_*.py` / `analyze_*.py` de las rondas de exploración,
 que están en `scripts/archive/`. Lo que aquí se calcula es lo que
@@ -15,7 +15,7 @@ Sadeghpour, Schmelcher & González-Férez, J. Phys.: Conf. Ser. 635, 012023
     H_ad(R) = H_A + H_mol
             = diag(E_ryd) + [B·N² - d·F_ion(R) - d·F_elec(R)]
 
-KRb es un DIPOLO PUNTUAL en el campo del Rydberg. **No hay pseudopotencial de
+La molécula es un DIPOLO PUNTUAL en el campo del Rydberg. **No hay pseudopotencial de
 Fermi**: el de contacto modela un perturbador NEUTRO (la otra línea, la de
 Aguilera-Fernández 2016), y meterlo aquí fue la premisa equivocada que
 `docs/analysis_fig1_carga_dipolo_sin_fermi.md` §1 corrige.
@@ -59,8 +59,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from trimero.systems.rb_krb_polar.bop_system import GHZ_PER_HARTREE as GHZ, BOPSystem
-from trimero.systems.rb_krb_polar.charge_dipole import B_KRB_GHZ
+from trimero.systems.polar_molecule import MOLECULES, get_molecule
+from trimero.systems.polar_rydberg import GHZ_PER_HARTREE as GHZ, PolarBOPSystem
+from trimero.systems.rb_krb_polar.bop_system import BOPSystem
 from trimero.systems.rb_krb_polar.rb_defects import DELTA0_NS_PAPER
 
 RULE = "=" * 92
@@ -70,12 +71,12 @@ N_KEEP = 250          # autovalores guardados por punto, para el fondo de la fig
 def parse_args():
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--system", choices=("polar", "neutral"), default="polar",
-                    help="sistema físico. 'polar' = Rb*-KRb, H_ad = H_A + H_mol "
-                         "(vigente). 'neutral' = perturbador neutro con "
-                         "pseudopotencial de Fermi (no cableado aquí todavía).")
+    ap.add_argument("--molecule", choices=tuple(MOLECULES), default="krb",
+                    help="molécula polar: krb o rbcs")
     ap.add_argument("--n-manifold", type=int, default=25,
                     help="n del manifold cuasi-degenerado (l >= 3)")
+    ap.add_argument("--n-max", type=int, default=6,
+                    help="corte rotacional N_max (RbCs n=25 validado con 6)")
     ap.add_argument("--mj", type=int, nargs="+", default=[0, 1],
                     help="bloques M_J a calcular")
     ap.add_argument("--rmin", type=float, default=400.0)
@@ -83,12 +84,12 @@ def parse_args():
     ap.add_argument("--step", type=float, default=5.0)
     ap.add_argument("--weight", type=float, default=0.5,
                     help="peso mínimo de manifold para aceptar la curva")
-    ap.add_argument("--npz-dir", default="plots/rb_krb_polar",
-                    help="dónde se guardan/leen los .npz de la curva")
+    ap.add_argument("--npz-dir", default=None,
+                    help="directorio de datos; por defecto depende de --molecule")
     ap.add_argument("--reuse", action="store_true",
                     help="reutiliza el .npz si existe, en vez de rebarrer R")
     ap.add_argument("--out", default=None,
-                    help="PNG de salida (por defecto plots/rb_krb_polar/fig1_ad_MJ<..>_n<n>.png)")
+                    help="PNG; por defecto plots/rb_<mol>_polar/figures/")
     ap.add_argument("--no-plot", action="store_true")
     ap.add_argument("--ymin", type=float, default=-25.0)
     ap.add_argument("--ymax", type=float, default=1.0)
@@ -101,7 +102,11 @@ def character_curve(sysm, M_J, R, weight=0.5):
     (E - E_manifold [GHz], k, peso, todos los autovalores) de la curva
     adiabática más baja con CARÁCTER de manifold en este R.
     """
-    w, V = np.linalg.eigh(sysm.hamiltonian(R, M_J, fermi=False))
+    if isinstance(sysm, PolarBOPSystem):
+        H = sysm.hamiltonian(R, M_J)
+    else:  # compatibilidad con la regresión del BOPSystem histórico
+        H = sysm.hamiltonian(R, M_J, fermi=False)
+    w, V = np.linalg.eigh(H)
     mask = sysm.is_manifold(M_J)
     for k in range(len(w)):
         wm = float(np.sum(V[:, k][mask] ** 2))
@@ -180,9 +185,9 @@ def make_plot(sysm, args, data, thr, out):
         ax.set_xlabel(r"$R$  [$a_0$]")
         ax.set_title(f"$M_J = {M_J}$", fontsize=12)
     axes[0][0].set_ylabel(
-        r"$V(R) = E - [E_{n=%d,\,l\geq3} + E_{KRb}(N=0)]$  [GHz]" % n)
+        rf"$V(R) = E - [E_{{n={n},\,l\geq3}} + E_{{{sysm.molecule.label}}}(N=0)]$  [GHz]")
     fig.suptitle(
-        f"Rb*-KRb, curvas BOP del manifold $n={n}$   —   "
+        f"Rb*-{sysm.molecule.label}, curvas BOP del manifold $n={n}$   —   "
         r"$H_{ad} = H_A + H_{mol}$  (Ec. 1 de Aguilera-Fernández et al. 2015)"
         "\nSIN pseudopotencial de Fermi: no hay remapeo $k(R)$, ni ventana de "
         "resonancia, ni tope de dominio\n"
@@ -193,37 +198,37 @@ def make_plot(sysm, args, data, thr, out):
     fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=8.5,
                frameon=False, bbox_to_anchor=(0.5, 0.005))
     fig.tight_layout(rect=[0, 0.11, 1, 0.88])
+    out_dir = os.path.dirname(out)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     fig.savefig(out, dpi=150)
     print(f"\n  PNG guardado en {out}")
 
 
 def main():
     args = parse_args()
-    if args.system == "neutral":
-        raise NotImplementedError(
-            "El sistema de perturbador neutro (pseudopotencial de Fermi, "
-            "Aguilera-Fernández 2016) no está cableado en este script.\n"
-            "El código vive en src/trimero/systems/rb_neutral_perturber/ y sus "
-            "tests están verdes; lo que falta es el barrido de producción.\n"
-            "Material de referencia: docs/archive/rb_neutral_perturber/.")
-
-    sysm = BOPSystem(n_manifold=args.n_manifold, delta0_ns=DELTA0_NS_PAPER)
+    molecule = get_molecule(args.molecule)
+    root = f"plots/rb_{molecule.key}_polar"
+    args.npz_dir = args.npz_dir or f"{root}/data"
+    sysm = PolarBOPSystem(molecule=molecule, n_manifold=args.n_manifold,
+                          N_max=args.n_max,
+                          delta0_ns=DELTA0_NS_PAPER)
     n = sysm.n_manifold
     L = {0: "s", 1: "p", 2: "d"}
 
     print(RULE)
-    print("Curvas BOP Rb*-KRb   —   H_ad = H_A + H_mol   (SIN pseudopotencial "
+    print(f"Curvas BOP Rb*-{molecule.label}   —   H_ad = H_A + H_mol   (SIN pseudopotencial "
           "de Fermi)")
     print(RULE)
     print(f"\n  manifold n={n} (l={sysm.l_min}..{sysm.l_max}) + "
           + " + ".join(f"{sysm.levels[l]}{L[l]}" for l in (2, 1, 0)))
     print(f"  delta0_ns = {DELTA0_NS_PAPER}   cero de energía: "
-          f"E(n={n}, l>=3) + KRb(N=0) = {sysm.E_manifold:.12e} E_h")
+          f"E(n={n}, l>=3) + {molecule.label}(N=0) = {sysm.E_manifold:.12e} E_h")
     print(f"  rango: R ∈ [{args.rmin:.0f}, {args.rmax:.0f}] a0, paso "
           f"{args.step:.0f} a0 — completo, sin recortes")
 
-    thr = {N: sysm.delta_E_ghz(0) + B_KRB_GHZ * N * (N + 1) for N in (5, 6)}
-    print(f"\n  umbrales asintóticos {sysm.n_s}s + KRb(N):")
+    thr = sysm.thresholds_ns_ghz((5, 6))
+    print(f"\n  umbrales asintóticos {sysm.n_s}s + {molecule.label}(N):")
     for N in (5, 6):
         print(f"    ΔE({sysm.n_s}s) + {N*(N+1)}B (N={N}) = {thr[N]:9.4f} GHz")
 
@@ -233,12 +238,21 @@ def main():
         npz = os.path.join(args.npz_dir, f"fig1_ad_MJ{M_J}_n{n}.npz")
         if args.reuse and os.path.exists(npz):
             d = np.load(npz)
+            if "molecule" not in d.files or str(d["molecule"]) != molecule.key:
+                raise ValueError(
+                    f"{npz} no contiene metadatos compatibles con {molecule.key}; "
+                    "recalcula sin --reuse"
+                )
             data[M_J] = {k: d[k] for k in d.files}
             print(f"\n  M_J={M_J}: reutilizando {npz}")
         else:
             data[M_J] = sweep(sysm, M_J, R, args.weight)
             os.makedirs(args.npz_dir, exist_ok=True)
-            np.savez(npz, **data[M_J])
+            np.savez(npz, **data[M_J], molecule=molecule.key,
+                     B_hz=molecule.rotational_constant_hz,
+                     d_debye=molecule.dipole_debye,
+                     n_manifold=n, N_max=sysm.N_max, M_J=M_J,
+                     character_weight=args.weight, schema_version=1)
             print(f"    datos en {npz}")
 
     print("\n" + "-" * 92)
@@ -249,7 +263,7 @@ def main():
 
     if not args.no_plot:
         out = args.out or os.path.join(
-            args.npz_dir,
+            root, "figures",
             "fig1_ad_" + "_".join(f"MJ{m}" for m in args.mj) + f"_n{n}.png")
         make_plot(sysm, args, data, thr, out)
 

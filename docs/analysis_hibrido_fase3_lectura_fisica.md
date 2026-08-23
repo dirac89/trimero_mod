@@ -168,9 +168,9 @@ un campo externo?
 
 - Script: `scripts/compute_hybrid_curves.py` (v4: referencia sin Fermi +
   tracking ininterrumpido + avisos honestos + comparación puntual)
-- Datos: `plots/hybrid_neutral_polar/hybrid_caracter_R1{600,900,1100}_n35_Nmax6.npz`
+- Datos: `plots/hybrid_neutral_polar/data/hybrid_caracter_R1{600,900,1100}_n35_Nmax6.npz`
   (claves: R2,E,K,Wman,Wneigh,overlap,spectrum,K_puntual,E_puntual,meta)
-- Figuras: `plots/hybrid_neutral_polar/hybrid_curves_caracter_MJ0_n35.png`,
-  `plots/hybrid_neutral_polar/geometria_hibrido_R1-900_R2-1000.png`
+- Figuras: `plots/hybrid_neutral_polar/figures/hybrid_curves_caracter_MJ0_n35.png`,
+  `plots/hybrid_neutral_polar/figures/geometria_hibrido_R1-900_R2-1000.png`
 - Antecedentes: `analysis_hibrido_caracter_E0.md` (diagnóstico y revocación),
   `analysis_trimero_lineal_campo_dc.md` (módulo neutro validado)

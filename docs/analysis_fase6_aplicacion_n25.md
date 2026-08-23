@@ -275,7 +275,7 @@ una ventana de R más ancha (ver §7).
 - `docs/PLAN_nonadiabatic_dynamics.md` (ESTADO ACTUAL: Fase 6 en curso, con
   resumen de esta ronda)
 - `docs/analysis_fase6_aplicacion_n25.md` (este documento)
-- `plots/hybrid_neutral_polar/fase6_n25_results.npz` (resultados
+- `plots/hybrid_neutral_polar/data/fase6_n25_results.npz` (resultados
   numéricos: R_mid, A, B, W_mid, L_values, E_box, bound_summary)
 
 No se tocó ningún módulo de `src/trimero/` ni ningún test en esta ronda

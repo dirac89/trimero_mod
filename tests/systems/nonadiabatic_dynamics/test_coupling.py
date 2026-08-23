@@ -16,7 +16,7 @@ referencia analítica independiente de la discretización.
 
 Test d usa un cruce evitado REAL ya documentado en el proyecto: el sistema
 Rb*-KRb (`BOPSystem`, n_manifold=25, M_J=0, sin Fermi) tiene, según
-`plots/rb_krb_polar/fig1_ad_MJ0_n25.npz`, un cambio de índice de la curva de
+`plots/rb_krb_polar/data/fig1_ad_MJ0_n25.npz`, un cambio de índice de la curva de
 carácter de manifold k: 54->55 cerca de R=1300 a0. Un escaneo fino del hueco
 de energía w[55]-w[54] localiza el mínimo real en R≈1305 a0 (hueco ≈5e-9 Eh,
 muchísimo más estrecho que la resolución de 5 a0 del barrido de producción).
@@ -138,7 +138,7 @@ def test_smooth_away_from_crossings_real_system():
 def test_peak_at_real_documented_avoided_crossing():
     """
     Cruce evitado real documentado: BOPSystem(n_manifold=25), M_J=0, sin
-    Fermi, par de estados k=54,55. `plots/rb_krb_polar/fig1_ad_MJ0_n25.npz`
+    Fermi, par de estados k=54,55. `plots/rb_krb_polar/data/fig1_ad_MJ0_n25.npz`
     registra el cambio de índice de la curva de carácter cerca de R=1300 a0;
     un escaneo fino del hueco w[55]-w[54] ubica el mínimo real en R≈1305 a0
     (hueco ≈ 4.7e-9 Eh, ver docs/analysis_fase1_acoplamiento_derivada.md).

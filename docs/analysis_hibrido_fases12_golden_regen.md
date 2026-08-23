@@ -10,7 +10,7 @@
 Tras el arreglo de `wigner_3j` (orden canónico; hermiticidad 2.8e−13 → 3.0e−19
 relativo), el test de regresión `test_r2` fallaba su rtol=1e−12 con desviaciones
 de hasta 6.34e−12 relativo. Se ejecutó la **Opción A**: regenerar el golden
-`plots/rb_krb_polar/fig1_ad_MJ0_n25.npz` con el wigner corregido. El cambio es
+`plots/rb_krb_polar/data/fig1_ad_MJ0_n25.npz` con el wigner corregido. El cambio es
 **mejora de precisión verificada contra aritmética racional exacta** (error total
 5.405e−11 → 4.846e−11 frente al Racah en `fractions.Fraction`), **no una
 corrección de física**: la tabla de los 7 valores de referencia se mueve como
@@ -169,7 +169,7 @@ Lectura física:
   pseudopotencial π está al otro lado del core y su efecto decae con R1.
 - El extremo R2→1500 converge hacia la cota polar pura (~−102.8 GHz), coherente
   con el test de límite L-b (E[0] = −102.54 GHz en su configuración).
-- Datos: `plots/hybrid_neutral_polar/hybrid_curves_R1{600,900,1100}_n35.npz`;
+- Datos: `plots/hybrid_neutral_polar/data/hybrid_curves_R1{600,900,1100}_n35.npz`;
   figura `hybrid_curves_MJ0_n35.png`.
 
 ## Conclusiones y Aplicación al Proyecto

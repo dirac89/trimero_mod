@@ -39,6 +39,11 @@ polar y perturbador neutro—; ver `STATUS.md` para la separación.
 
 ### Vigentes
 
+- [`PLAN_rb_rbcs_polar.md`](PLAN_rb_rbcs_polar.md): arquitectura, validación y
+  producción del sistema polar puro Rb\*+RbCs.
+- [`analysis_rb_rbcs_curvas_n25.md`](analysis_rb_rbcs_curvas_n25.md): curvas
+  BOP y orientación completas de Rb\*+RbCs para n=25.
+
 | Documento | Contenido |
 |---|---|
 | `STATUS.md` | 🟢 **PUNTO DE ENTRADA**: modelo físico vigente de Rb*-KRb, base, criterio de carácter, δ₀(ns), deuda técnica y enlaces a la referencia activa |
