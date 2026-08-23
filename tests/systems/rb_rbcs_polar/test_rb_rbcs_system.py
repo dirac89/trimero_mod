@@ -47,3 +47,32 @@ def test_hybrid_custom_constants_reach_charge_dipole_hamiltonian():
     )
     assert hybrid.hmol.d == hybrid.d_au
     assert hybrid.hmol.B == hybrid.B_au
+
+
+def test_external_field_zero_is_bitwise_noop_and_nonzero_is_hermitian():
+    system = RbRbCsPolarSystem(n_manifold=24, N_max=1)
+    H0 = system.hamiltonian(800.0, 0)
+    assert np.array_equal(system.hamiltonian_with_field(800.0, 0, 0.0), H0)
+
+    V100 = system.external_field_matrix(0, 100.0)
+    V500 = system.external_field_matrix(0, 500.0)
+    np.testing.assert_allclose(V500, 5.0 * V100, rtol=3e-16, atol=0.0)
+    assert np.array_equal(V100, V100.T)
+    assert np.max(np.abs(V100)) > 0.0
+
+
+def test_external_field_contains_electronic_and_molecular_stark_terms():
+    system = RbRbCsPolarSystem(n_manifold=24, N_max=1)
+    block = system.block(0)
+    V = system.external_field_matrix(0, 500.0)
+    index = {state: i for i, state in enumerate(block.states)}
+
+    # Electrón: mismo rotor, l cambia en una unidad.
+    i = index[(3, 0, 0, 0)]
+    j = index[(4, 0, 0, 0)]
+    assert V[i, j] != 0.0
+
+    # Molécula: mismo electrón, N cambia en una unidad.
+    i = index[(3, 0, 0, 0)]
+    j = index[(3, 0, 1, 0)]
+    assert V[i, j] != 0.0

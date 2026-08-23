@@ -83,6 +83,22 @@ poetry run python scripts/compute_bop_curve.py \
 # Orientación
 poetry run python scripts/compute_orientation_curve.py \
   --molecule rbcs --n-manifold 25 --n-max 6 --mj 0
+
+# Figuras únicas de comparación para n=24,...,30 (requieren los NPZ previos)
+poetry run python scripts/compare_bop_curves_n.py \
+  --molecule rbcs --n 24 25 26 27 28 29 30 --mj 0
+poetry run python scripts/compare_orientation_n.py \
+  --molecule rbcs --n 24 25 26 27 28 29 30 --mj 0 --rmax-plot 800
+
+# Figura de orientación y alineamiento tipo Fig. 3, comparando n=25 y n=29
+# (los NPZ deben haberse calculado con la versión que incluye COS2)
+poetry run python scripts/plot_orientation_alignment.py \
+  --molecule rbcs --n 25 29 --mj 0 --n-max 6 --rmin 400 --rmax 1800
+
+# Potenciales con campo DC paralelo a Z, un panel independiente por campo
+poetry run python scripts/compute_field_curves.py \
+  --molecule rbcs --n-manifold 25 --n-max 6 --mj 0 \
+  --fields 0 100 300 500 --rmin 400 --rmax 1800 --step 5
 ```
 
 Salidas: `plots/rb_rbcs_polar/data/` y `plots/rb_rbcs_polar/figures/`.

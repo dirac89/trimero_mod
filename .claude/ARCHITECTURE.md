@@ -204,6 +204,8 @@ carácter pertinente.
 | `compute_orientation_curve.py` | KRb/RbCs polar | misma raíz |
 | `compare_bop_curves_n.py` | comparación polar | `figures/` |
 | `compare_orientation_n.py` | comparación polar | `figures/` |
+| `plot_orientation_alignment.py` | orientación y alineamiento polar, más rotor de referencia | `figures/` |
+| `compute_field_curves.py` | KRb/RbCs polar con campo DC paralelo a Z | misma raíz; un panel por campo |
 | `check_polar_convergence.py` | convergencia `N_max` | terminal |
 | `compute_trimer_curves.py` | perturbador neutro | `plots/rb_neutral_perturber/` |
 | `compute_hybrid_curves.py` | híbrido | `plots/hybrid_neutral_polar/` |

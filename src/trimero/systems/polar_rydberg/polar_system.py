@@ -15,10 +15,12 @@ from trimero.systems.rb_krb_polar.charge_dipole import (
     rydberg_diagonal,
 )
 from trimero.systems.rb_krb_polar.rb_defects import n_star_nl, neighbor_levels
+from trimero.systems.rb_atom import Atom
 
-__all__ = ["GHZ_PER_HARTREE", "PolarBOPSystem"]
+__all__ = ["GHZ_PER_HARTREE", "V_PER_M_PER_AU", "PolarBOPSystem"]
 
 GHZ_PER_HARTREE = HZ_PER_HARTREE / 1.0e9
+V_PER_M_PER_AU = 5.14220674763e11
 
 
 @dataclass
@@ -114,6 +116,48 @@ class PolarBOPSystem:
     def hamiltonian(self, R: float, M_J: int = 0) -> np.ndarray:
         block = self.block(M_J)
         return np.diag(self.rydberg_diagonal(M_J)) + self.hmol.build(block, R)
+
+    def external_field_matrix(self, M_J: int = 0, field_v_per_m: float = 0.0) -> np.ndarray:
+        """``F·r - d·F`` para un campo DC paralelo a Z, en hartree."""
+        block = self.block(M_J)
+        H = np.zeros((len(block), len(block)), dtype=np.float64)
+        if field_v_per_m == 0.0:
+            return H
+        field_au = field_v_per_m / V_PER_M_PER_AU
+        states = block.states
+        index = {state: i for i, state in enumerate(states)}
+        atom = Atom(self.n_manifold, self.l_min)
+
+        # F·z electrónico: Δl=±1, Δm_l=0, identidad sobre el rotor.
+        for i, (l, m, N, MN) in enumerate(states):
+            for lp in (l - 1, l + 1):
+                j = index.get((lp, m, N, MN))
+                if j is None:
+                    continue
+                radial = float(np.trapezoid(
+                    self.radial.u(l) * self.radial.u(lp) * self.radial.r,
+                    self.radial.r,
+                ))
+                H[i, j] = atom.Vfield(l, lp, m, m, radial, field_au)
+
+            # -d F cos(theta_d): ΔN=±1, ΔM_N=0, identidad electrónica.
+            for Np in (N - 1, N + 1):
+                j = index.get((l, m, Np, MN))
+                if j is None:
+                    continue
+                H[i, j] += -self.molecule.d_au * field_au * self.hmol.cos_theta_element(
+                    N, MN, Np, MN
+                )
+        return H
+
+    def hamiltonian_with_field(
+        self, R: float, M_J: int = 0, field_v_per_m: float = 0.0
+    ) -> np.ndarray:
+        """Hamiltoniano polar con campo DC externo opcional paralelo a Z."""
+        H = self.hamiltonian(R, M_J)
+        if field_v_per_m == 0.0:
+            return H
+        return H + self.external_field_matrix(M_J, field_v_per_m)
 
     def eigvals(self, R: float, M_J: int = 0) -> np.ndarray:
         return np.linalg.eigvalsh(self.hamiltonian(R, M_J))

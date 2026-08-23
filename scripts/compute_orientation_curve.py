@@ -70,6 +70,8 @@ def parse_args():
     ap.add_argument("--npz-dir", default=None)
     ap.add_argument("--out", default=None,
                     help="PNG; por defecto figures/orientation_MJ<mj>_n<n>_Nmax<N>.png")
+    ap.add_argument("--no-plot", action="store_true",
+                    help="guarda sólo el .npz; útil antes de una comparación multi-n")
     return ap.parse_args()
 
 
@@ -88,12 +90,38 @@ def cos_theta_matrix(system, block):
     return C
 
 
-def sweep(sysm, M_J, R, C, weight):
+def cos2_theta_matrix(system, block):
+    """Matriz exacta de cos²(theta_d) en la base rotacional truncada.
+
+    La suma incluye el estado intermedio N_max+1 cuando contribuye a un
+    elemento diagonal; por ello no se usa simplemente ``C @ C``.
+    """
+    states = block.states
+    index = {st: i for i, st in enumerate(states)}
+    C2 = np.zeros((len(states), len(states)))
+    for i, (l, m, N, MN) in enumerate(states):
+        for Np in (N - 2, N, N + 2):
+            if Np < 0 or abs(MN) > Np:
+                continue
+            j = index.get((l, m, Np, MN))
+            if j is None:
+                continue
+            intermediates = set((N - 1, N + 1)) & set((Np - 1, Np + 1))
+            C2[i, j] = sum(
+                system.hmol.cos_theta_element(N, MN, Nt, MN)
+                * system.hmol.cos_theta_element(Nt, MN, Np, MN)
+                for Nt in intermediates if Nt >= abs(MN)
+            )
+    return C2
+
+
+def sweep(sysm, M_J, R, C, C2, weight):
     mask = sysm.is_manifold(M_J)
     E = np.full(len(R), np.nan)
     K = np.full(len(R), -1, dtype=int)
     W = np.zeros(len(R))
     COS = np.full(len(R), np.nan)
+    COS2 = np.full(len(R), np.nan)
     t0 = time.perf_counter()
     for i, r in enumerate(R):
         w, V = np.linalg.eigh(sysm.hamiltonian(float(r), M_J))
@@ -105,12 +133,13 @@ def sweep(sysm, M_J, R, C, weight):
                 K[i] = k
                 W[i] = wm
                 COS[i] = float(v @ C @ v)
+                COS2[i] = float(v @ C2 @ v)
                 break
         if i % 40 == 0:
             print(f"    R = {r:8.2f} ({i+1}/{len(R)})", flush=True)
     dt = time.perf_counter() - t0
     print(f"    {len(R)} diagonalizaciones en {dt:.1f} s ({dt/len(R):.2f} s/punto)")
-    return {"R": R, "E": E, "K": K, "W": W, "COS": COS}
+    return {"R": R, "E": E, "K": K, "W": W, "COS": COS, "COS2": COS2}
 
 
 def diagnose_ambiguity(d, thr=0.02):
@@ -162,6 +191,7 @@ def main():
     n = sysm.n_manifold
     block = sysm.block(args.mj)
     C = cos_theta_matrix(sysm, block)
+    C2 = cos2_theta_matrix(sysm, block)
 
     print("=" * 88)
     print(f"Orientacion <cos theta_d> Rb*-{molecule.label}, n={n}, M_J={args.mj}")
@@ -172,7 +202,7 @@ def main():
         np.arange(args.rmin_fine, args.rmax_fine, args.step_fine),
         np.arange(args.rmax_fine, args.rmax_coarse + 1e-9, args.step_coarse),
     ])
-    d = sweep(sysm, args.mj, R, C, args.weight)
+    d = sweep(sysm, args.mj, R, C, C2, args.weight)
 
     n_nan = int(np.sum(np.isnan(d["COS"])))
     cos_valid = d["COS"][~np.isnan(d["COS"])]
@@ -181,6 +211,10 @@ def main():
     assert np.all(cos_valid >= -1.0 - 1e-9) and np.all(cos_valid <= 1.0 + 1e-9), \
         "cos theta_d fuera de [-1,1]: violación de una propiedad matemática exacta"
     print("  [-1,1] verificado: PASA")
+    cos2_valid = d["COS2"][~np.isnan(d["COS2"])]
+    assert np.all(cos2_valid >= -1e-9) and np.all(cos2_valid <= 1.0 + 1e-9), \
+        "cos² theta_d fuera de [0,1]"
+    print(f"  rango de <cos² theta_d>: [{cos2_valid.min():.6f}, {cos2_valid.max():.6f}]")
 
     events = diagnose_ambiguity(d)
     print(f"\n  eventos de posible ambigüedad (cambio de K o |Δcos|>0.02): "
@@ -194,11 +228,12 @@ def main():
              B_hz=molecule.rotational_constant_hz,
              d_debye=molecule.dipole_debye,
              n_manifold=n, N_max=sysm.N_max, M_J=args.mj,
-             character_weight=args.weight, schema_version=1)
+             character_weight=args.weight, schema_version=2)
     print(f"\n  datos en {npz}")
-    out = args.out or f"plots/rb_{molecule.key}_polar/figures/orientation_MJ{args.mj}_n{n}_Nmax{args.n_max}.png"
-    make_plot(d, molecule, args, out)
-    print(f"  PNG en {out}")
+    if not args.no_plot:
+        out = args.out or f"plots/rb_{molecule.key}_polar/figures/orientation_MJ{args.mj}_n{n}_Nmax{args.n_max}.png"
+        make_plot(d, molecule, args, out)
+        print(f"  PNG en {out}")
     print("=" * 88)
 
 
