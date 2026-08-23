@@ -38,6 +38,9 @@ src/trimero/
 │   └── radial.py         RadialBasis — tablas radiales hidrogenoides
 ├── simulation/
 │   └── bop_tracking.py   trace_curve — rastreo de curvas, agnóstico del sistema
+├── visualization/        SIN FÍSICA: sólo numpy + matplotlib
+│   └── geometry_diagram.py  Body/Electron/draw_geometry — esquemas de
+│                            geometría molecular (ion + N perturbadores)
 └── systems/
     ├── rb_atom.py        Atom.E_Rb() — defectos cuánticos de Rb. COMPARTIDO:
     │                     es la fuente de verdad de los dos sistemas
@@ -63,6 +66,7 @@ dos excepciones).
 
 ```
 basis/radial.py                       → systems.rb_krb_polar.rb_defects        ⚠️
+visualization/geometry_diagram.py     → (nada del repositorio)
 mathlib/laplacian.py                  → mathlib.special
 systems/rb_atom.py                    → mathlib.{laplacian,special}
 rb_krb_polar/bop_system.py            → basis.{quantum,radial}
