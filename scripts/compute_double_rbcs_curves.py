@@ -29,6 +29,10 @@ def parse_args():
     p.add_argument("--step", type=float, default=10.0)
     p.add_argument("--weight", type=float, default=0.5)
     p.add_argument("--overlap", type=float, default=0.7)
+    p.add_argument("--min-substep", type=float, default=0.5,
+                   help="paso mínimo de la continuación adaptativa [a0]")
+    p.add_argument("--bisect-max-depth", type=int, default=6,
+                   help="número máximo de bisecciones por hueco")
     p.add_argument("--sigma-ghz", type=float, default=-30.0)
     p.add_argument("--k", type=int, default=80)
     p.add_argument("--max-k", type=int, default=320)
@@ -75,6 +79,78 @@ def solve_with_k(system, radius, mj, geometry, separation, field, sigma, k):
     )
 
 
+def _continuation_attempt(
+    system, radius, mj, geometry, args, field, sigma, mask,
+    reference_vector=None, seed_vector=None,
+):
+    """Resuelve un radio conservando intacta la duplicación existente de k."""
+    k = args.k
+    while True:
+        values, vectors = solve_with_k(
+            system, radius, mj, geometry, args.separation, field, sigma, k,
+        )
+        weights = np.sum(vectors[mask, :] ** 2, axis=0)
+        eligible = np.flatnonzero(weights > args.weight)
+        reference = seed_vector if reference_vector is None else reference_vector
+        overlaps = (reference @ vectors) ** 2
+        selected = (
+            int(eligible[np.argmax(overlaps[eligible])])
+            if len(eligible) else int(np.argmax(overlaps))
+        )
+        quality = float(overlaps[selected])
+        if weights[selected] > args.weight:
+            if quality >= args.overlap or k >= args.max_k:
+                break
+        if k >= args.max_k:
+            raise RuntimeError(
+                f"no se localizó la rama en R={radius:g}, MJ={mj}, F={field:g}"
+            )
+        k = min(2 * k, args.max_k)
+
+    relative = (values - system.E_manifold) * GHZ_PER_HARTREE
+    return {
+        "values": values,
+        "vectors": vectors,
+        "weights": weights,
+        "selected": selected,
+        "quality": quality,
+        "vector": vectors[:, selected],
+        "relative": relative,
+        "energy": float(relative[selected]),
+        "k": k,
+    }
+
+
+def _bisect_continuation(
+    system, start_radius, start_vector, start_sigma, target_radius,
+    mj, geometry, args, field, mask, depth=0, initial_result=None,
+):
+    """Cierra un hueco con puntos temporales que no forman parte del grid."""
+    target = initial_result or _continuation_attempt(
+        system, target_radius, mj, geometry, args, field, start_sigma, mask,
+        reference_vector=start_vector,
+    )
+    if target["quality"] >= args.overlap:
+        return target
+
+    half_step = abs(target_radius - start_radius) / 2.0
+    if depth >= args.bisect_max_depth or half_step < args.min_substep:
+        return target
+
+    midpoint = (start_radius + target_radius) / 2.0
+    middle = _bisect_continuation(
+        system, start_radius, start_vector, start_sigma, midpoint,
+        mj, geometry, args, field, mask, depth=depth + 1,
+    )
+    if middle["quality"] < args.overlap:
+        return target
+
+    return _bisect_continuation(
+        system, midpoint, middle["vector"], middle["energy"], target_radius,
+        mj, geometry, args, field, mask, depth=depth + 1,
+    )
+
+
 def sweep(system, R, mj, geometry, args, field):
     """Siembra en Rmax y sigue hacia dentro por máximo solapamiento."""
     mask = system.is_manifold(mj)
@@ -90,65 +166,66 @@ def sweep(system, R, mj, geometry, args, field):
     spectrum = np.full((len(R), args.context), np.nan)
     warnings = []
     previous = None
+    previous_radius = None
+    last_good_vector = None
+    last_good_radius = None
+    last_good_sigma = None
     sigma = args.sigma_ghz
     seed_vector = None
     started = time.perf_counter()
 
     for count, idx in enumerate(order, 1):
         radius = float(R[idx])
-        k = args.k
         if previous is None:
             seed_energy, seed_vector = system.manifold_seed(
                 radius, mj, geometry, args.separation, field
             )
             sigma = (seed_energy - system.E_manifold) * GHZ_PER_HARTREE
-        while True:
-            values, vectors = solve_with_k(
-                system, radius, mj, geometry, args.separation, field, sigma, k,
+        result = _continuation_attempt(
+            system, radius, mj, geometry, args, field, sigma, mask,
+            reference_vector=previous, seed_vector=seed_vector,
+        )
+        if (
+            previous is not None
+            and result["quality"] < args.overlap
+            and result["k"] == args.max_k
+            and last_good_vector is not None
+        ):
+            result = _bisect_continuation(
+                system, last_good_radius, last_good_vector, last_good_sigma,
+                radius, mj, geometry, args, field, mask,
+                initial_result=(
+                    result if previous_radius == last_good_radius else None
+                ),
             )
-            weights = np.sum(vectors[mask, :] ** 2, axis=0)
-            eligible = np.flatnonzero(weights > args.weight)
-            if previous is None:
-                seed_overlaps = (seed_vector @ vectors) ** 2
-                selected = (
-                    int(eligible[np.argmax(seed_overlaps[eligible])])
-                    if len(eligible) else int(np.argmax(seed_overlaps))
-                )
-                quality = float(seed_overlaps[selected])
-            else:
-                overlaps = (previous @ vectors) ** 2
-                selected = (
-                    int(eligible[np.argmax(overlaps[eligible])])
-                    if len(eligible) else int(np.argmax(overlaps))
-                )
-                quality = float(overlaps[selected])
-            if selected >= 0 and weights[selected] > args.weight:
-                if quality >= args.overlap or k >= args.max_k:
-                    break
-            if k >= args.max_k:
-                raise RuntimeError(
-                    f"no se localizó la rama en R={radius:g}, MJ={mj}, F={field:g}"
-                )
-            k = min(2 * k, args.max_k)
 
-        vector = vectors[:, selected]
-        relative = (values - system.E_manifold) * GHZ_PER_HARTREE
-        E[idx] = relative[selected]
-        W[idx] = weights[selected]
-        O[idx] = quality
+        vector = result["vector"]
+        relative = result["relative"]
+        selected = result["selected"]
+        E[idx] = result["energy"]
+        W[idx] = result["weights"][selected]
+        O[idx] = result["quality"]
         COS1[idx] = float(vector @ (C1 @ vector))
         COS2[idx] = float(vector @ (C2 @ vector))
-        KUSED[idx] = k
+        KUSED[idx] = result["k"]
         take = min(args.context, len(relative))
         spectrum[idx, :take] = relative[:take]
         if O[idx] < args.overlap or W[idx] < args.weight:
-            warnings.append((radius, float(O[idx]), float(W[idx]), int(k)))
+            warnings.append(
+                (radius, float(O[idx]), float(W[idx]), int(result["k"]))
+            )
         previous = vector
+        previous_radius = radius
         sigma = float(E[idx])
+        if O[idx] >= args.overlap:
+            last_good_vector = vector
+            last_good_radius = radius
+            last_good_sigma = sigma
         if count == 1 or count % 20 == 0 or count == len(R):
             print(
                 f"{geometry} MJ={mj} F={field:g}: R={radius:.0f} "
-                f"({count}/{len(R)}), E={E[idx]:.3f} GHz, k={k}", flush=True
+                f"({count}/{len(R)}), E={E[idx]:.3f} GHz, "
+                f"k={result['k']}", flush=True
             )
 
     elapsed = time.perf_counter() - started
@@ -169,7 +246,8 @@ def save(path, data, args, geometry, mj, field, dim):
         path, **data, geometry=geometry, separation_a0=args.separation,
         molecule="rbcs", n_manifold=args.n_manifold, N_max=args.n_max,
         M_J=mj, field_v_per_m=field, character_weight=args.weight,
-        overlap_threshold=args.overlap, dimension=dim, schema_version=1,
+        overlap_threshold=args.overlap, min_substep_a0=args.min_substep,
+        bisect_max_depth=args.bisect_max_depth, dimension=dim, schema_version=1,
     )
 
 
@@ -249,6 +327,8 @@ def main():
     args = parse_args()
     if args.rmax <= args.rmin or args.step <= 0:
         raise SystemExit("se requiere rmax>rmin y step>0")
+    if args.min_substep <= 0 or args.bisect_max_depth < 0:
+        raise SystemExit("min-substep debe ser >0 y bisect-max-depth >=0")
     geometries = ("symmetric", "unilateral") if args.geometry == "both" else (args.geometry,)
     R = np.arange(args.rmin, args.rmax + 1e-9, args.step)
     if args.workers < 1:

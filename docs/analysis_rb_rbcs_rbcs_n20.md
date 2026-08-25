@@ -194,3 +194,34 @@ referencia primitiva `N_max=6` es `-82.1401 GHz`, y además cambió la
 orientación. Por tanto no es correcto interpolar anclas separadas `200 a0`.
 La ruta de alta precisión requiere actualizar adaptativamente las matrices de
 densidad reducida o introducir una contracción conjunta de los dos rotores.
+
+## Continuación adaptativa en cruces densos
+
+El seguimiento de `compute_double_rbcs_curves.py` incorpora sub-stepping
+adaptativo para los puntos que siguen por debajo de `--overlap` después de
+agotar la duplicación de `k`. Primero se conserva sin cambios el intento
+normal con `k, 2k, ... --max-k`. Si todavía falla, el código biseca el hueco
+desde el último radio con continuidad aceptable, utiliza los autoestados de
+los puntos medios como semillas y vuelve a intentar el radio del grid.
+
+Los puntos auxiliares no se escriben en los NPZ: `R`, energías, orientaciones
+y espectros mantienen exactamente las 161 posiciones originales. La bisección
+se detiene con `--min-substep` (por defecto `0.5 a0`) o
+`--bisect-max-depth` (por defecto 6). Si no consigue recuperar el umbral, se
+mantiene el comportamiento anterior: el punto se acepta y queda registrado en
+`warning_R`.
+
+Los datasets de dos rotores que contienen puntos de solapamiento bajo deben
+regenerarse **sin `--reuse`**: geometrías `symmetric` y `unilateral`,
+`M_J=0,1` y los cuatro campos `0,100,300,500 V/m`. Por ejemplo:
+
+```bash
+poetry run python scripts/compute_double_rbcs_curves.py \
+  --geometry both --n-manifold 20 --n-max 3 --mj 0 1 \
+  --fields 0 100 300 500 --rmin 200 --rmax 1800 --step 10 \
+  --min-substep 0.5 --bisect-max-depth 6 --workers 4
+```
+
+No debe añadirse `--reuse` a ese comando, porque los NPZ existentes fueron
+calculados antes del sub-stepping. Los restantes datasets del proyecto no
+cambian y pueden seguir conservándose o reutilizándose con `--reuse`.
