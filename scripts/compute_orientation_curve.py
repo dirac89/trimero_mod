@@ -36,9 +36,17 @@ propio autovector cerca de una cuasi-degeneración), es la señal de
 seguimiento no fiable que describe cualitativamente
 docs/analysis_verificacion_tabla_I.md §11 — aquí se cuantifica por n.
 
+QUÉ MOLÉCULA POLAR
+------------------
+`--molecule` es OBLIGATORIO y no tiene valor por defecto, por la misma razón
+que en `compute_bop_curve.py`: el default silencioso `krb` hizo que las Fases A
+y B del plan de figuras se calcularan con KRb creyéndose RbCs. La molécula
+queda escrita en el `.npz` (`molecule`, `B_hz`, `d_debye`) y en el título de la
+figura. Ver `docs/analysis_faseA_curvas_bop_varios_n.md` §0.
+
 USO
 ---
-    poetry run python scripts/compute_orientation_curve.py --n-manifold 24
+    poetry run python scripts/compute_orientation_curve.py --molecule rbcs --n-manifold 24
 """
 import argparse
 import os
@@ -52,6 +60,20 @@ import numpy as np
 from trimero.systems.polar_molecule import MOLECULES, get_molecule
 from trimero.systems.polar_rydberg import GHZ_PER_HARTREE as GHZ, PolarBOPSystem
 from trimero.systems.rb_krb_polar.rb_defects import DELTA0_NS_PAPER
+from trimero.systems.rb_rbcs_polar import RbRbCsPolarSystem
+
+# Misma fábrica que compute_bop_curve.py: cada molécula con SU clase.
+SYSTEM_FOR_MOLECULE = {"rbcs": RbRbCsPolarSystem}
+
+
+def build_system(molecule, **kwargs):
+    """Instancia el sistema polar de esta molécula, con su clase específica."""
+    cls = SYSTEM_FOR_MOLECULE.get(molecule.key)
+    if cls is None:
+        return PolarBOPSystem(molecule=molecule, **kwargs)
+    system = cls(**kwargs)
+    assert system.molecule is molecule
+    return system
 
 
 def parse_args():
@@ -59,7 +81,8 @@ def parse_args():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--n-manifold", type=int, default=24)
     ap.add_argument("--n-max", type=int, default=6)
-    ap.add_argument("--molecule", choices=tuple(MOLECULES), default="krb")
+    ap.add_argument("--molecule", choices=tuple(MOLECULES), required=True,
+                    help="molécula polar (OBLIGATORIO, sin valor por defecto)")
     ap.add_argument("--mj", type=int, default=0)
     ap.add_argument("--rmin-fine", type=float, default=100.0)
     ap.add_argument("--rmax-fine", type=float, default=800.0)
@@ -185,9 +208,9 @@ def main():
     args = parse_args()
     molecule = get_molecule(args.molecule)
     args.npz_dir = args.npz_dir or f"plots/rb_{molecule.key}_polar/data"
-    sysm = PolarBOPSystem(molecule=molecule, n_manifold=args.n_manifold,
-                          N_max=args.n_max,
-                          delta0_ns=DELTA0_NS_PAPER)
+    sysm = build_system(molecule, n_manifold=args.n_manifold,
+                        N_max=args.n_max,
+                        delta0_ns=DELTA0_NS_PAPER)
     n = sysm.n_manifold
     block = sysm.block(args.mj)
     C = cos_theta_matrix(sysm, block)
@@ -196,6 +219,9 @@ def main():
     print("=" * 88)
     print(f"Orientacion <cos theta_d> Rb*-{molecule.label}, n={n}, M_J={args.mj}")
     print("=" * 88)
+    print(f"  molécula: {molecule.label} (key={molecule.key})   "
+          f"B = {molecule.B_ghz:.6f} GHz   d = {molecule.dipole_debye:.3f} D   "
+          f"clase: {type(sysm).__name__}")
     print(f"  dim(bloque) = {len(block)}   ||C||_F = {np.linalg.norm(C):.4f}")
 
     R = np.concatenate([
@@ -215,6 +241,13 @@ def main():
     assert np.all(cos2_valid >= -1e-9) and np.all(cos2_valid <= 1.0 + 1e-9), \
         "cos² theta_d fuera de [0,1]"
     print(f"  rango de <cos² theta_d>: [{cos2_valid.min():.6f}, {cos2_valid.max():.6f}]")
+
+    W_valid = d["W"][d["K"] >= 0]
+    print(f"\n  peso de manifold: W_min = {W_valid.min():.4f} en R = "
+          f"{d['R'][d['K'] >= 0][int(np.argmin(W_valid))]:.1f} a0   "
+          f"(umbral de aceptación {args.weight})   "
+          f"#W<0.90 = {int((W_valid < 0.90).sum())}   "
+          f"#W<0.70 = {int((W_valid < 0.70).sum())}")
 
     events = diagnose_ambiguity(d)
     print(f"\n  eventos de posible ambigüedad (cambio de K o |Δcos|>0.02): "

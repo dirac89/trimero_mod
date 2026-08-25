@@ -9,6 +9,32 @@ retomarse por otra instancia sin memoria de esta conversación.
 > sección **ESTADO ACTUAL** (al final) es lo primero que hay que leer si te
 > reactivan sin contexto.
 
+> 🔴 **RECTIFICACIÓN 2026-08-24 — lee esto antes que la nota de abajo.**
+> La "Corrección 2026-08-23" que sigue a este párrafo **resolvió el problema
+> por el lado equivocado**. Al ver que el plan pedía RbCs y el código corría
+> KRb, cambió la etiqueta del plan ("el sistema es Rb\*-KRb, no Rb\*-RbCs")
+> en vez de cambiar la molécula del cálculo. Lo que el plan quería era
+> **RbCs**, y desde los commits `ce328c5`/`0fa41a0` el repositorio sí puede
+> calcularlo: `polar_molecule.py` (registro KRB/RBCS),
+> `polar_rydberg/PolarBOPSystem` (motor genérico, con campo DC ya integrado —
+> `external_field_matrix`/`hamiltonian_with_field`, que sirve para la Fase C)
+> y `rb_rbcs_polar/RbRbCsPolarSystem` (la clase a usar).
+>
+> En consecuencia: **la Fase A se ha rehecho entera con RbCs** el 2026-08-24
+> (ver `docs/analysis_faseA_curvas_bop_varios_n.md` §0, que documenta el error
+> y su corrección). **Las Fases B-E son de Rb\*-RbCs**, no de Rb\*-KRb. Los
+> resultados de KRb siguen siendo válidos como cálculo de KRb y no se han
+> borrado, pero no son las figuras de este plan.
+>
+> Causa raíz, para que no se repita: `scripts/compute_bop_curve.py` primero
+> instanciaba `BOPSystem` (KRb) directamente, y después expuso `--molecule`
+> pero **con `default="krb"`**. Un default silencioso no aparece en la línea
+> de órdenes que uno copia al documento, así que nada delata la molécula. Ya
+> está corregido en `compute_bop_curve.py` y `compare_bop_curves_n.py`:
+> `--molecule` es **obligatorio**. ⚠️ **Sigue pendiente quitarlo en
+> `scripts/compute_orientation_curve.py` y `scripts/compare_orientation_n.py`
+> (Fase B), que aún tienen `default="krb"`.**
+
 > ⚠️ **Corrección 2026-08-23, tras cerrar la Fase B**: el texto original de
 > este plan (abajo, dictado tal cual por el usuario) llama "Rb*-RbCs" al
 > sistema `rb_krb_polar` y le atribuye las constantes moleculares del RbCs
@@ -185,7 +211,19 @@ ESTADO ACTUAL
 
 Fase 0: **COMPLETA** (este documento).
 
-Fase A: **COMPLETA** (2026-08-23). Curvas BOP M_J=0 calculadas y verificadas
+Fase A: **COMPLETA con RbCs** (rehecha el 2026-08-24). Curvas BOP M_J=0 para
+n=24,25,26,27 con `RbRbCsPolarSystem`, R ∈ [400,1800] a₀ paso 5 a₀, N_max=6.
+Punto de control previo KRb vs RbCs en R=400/n=25: −23.100158642 vs
+−56.141407508 GHz (distintos, como debe ser; y el valor de KRb es exactamente
+el de la regresión de la Fig. 1, lo que prueba que la Fase A vieja era KRb).
+Profundidad a 400 a₀: −61.65 / −56.14 / −51.29 / −47.12 GHz (razón ≈2.42-2.47
+sobre KRb). Sin NaN; peso de manifold ≥0.52 — **margen mucho menor que con
+KRb (≥0.92): vigilarlo en las fases siguientes**. Figura:
+`plots/rb_rbcs_polar/figures/fig_compare_n_MJ0.png` (ventana Y a −65 GHz; la
+de −25 GHz recortaba las curvas). Análisis: `docs/analysis_faseA_curvas_bop_varios_n.md`.
+Los cuatro .npz salieron bit a bit idénticos a los ya presentes en el repo.
+
+Fase A (versión KRb, histórica, 2026-08-23). Curvas BOP M_J=0 calculadas y verificadas
 para n=24,25,26,27 (n=25 reutilizado del cálculo previo, sin recalcular).
 Script nuevo `scripts/compare_bop_curves_n.py` (no toca `compute_bop_curve.py`,
 que ya aceptaba `--n-manifold` arbitrario). Figura:
@@ -199,7 +237,14 @@ curvas colapsan). `pytest -m "not slow"` en verde (133 passed) antes de
 empezar; `pytest` completo también en verde al cierre (**149 passed en
 644.69s**, ningún golden se movió) — Fase A cerrada sin deuda pendiente.
 
-Fase B: **cálculo y análisis completos, cierre formal pendiente** (2026-08-23).
+Fase B: **HAY QUE REHACERLA CON RbCs** (2026-08-24). Lo de abajo es la ronda
+de KRb; sirve como método (código, diagnóstico de ambigüedad, validación
+contra González-Férez 2015), pero sus números son de KRb. Existen ya datos de
+orientación de RbCs en `plots/rb_rbcs_polar/data/orientation_MJ0_n2*.npz`.
+Antes de recalcular: quitar el `default="krb"` de
+`scripts/compute_orientation_curve.py` y `scripts/compare_orientation_n.py`.
+
+Fase B (versión KRb, histórica): cálculo y análisis completos, cierre formal pendiente (2026-08-23).
 ⟨cosθ_d⟩ calculado para n=24,25,26,27 (M_J=0, fermi=False, R∈[100,1800] a₀).
 Código recuperado de la ronda anterior y reproducido bit a bit para n=24
 (confirmado); se detectó y corrigió una dependencia desactualizada

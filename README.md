@@ -14,6 +14,7 @@ estructura interna en [`.claude/ARCHITECTURE.md`](.claude/ARCHITECTURE.md).
 |---|---|---|---|
 | Rb\*+KRb | `polar_rydberg` + `KRB` | carga–dipolo | `compute_bop_curve.py` |
 | Rb\*+RbCs | `polar_rydberg` + `RBCS` | carga–dipolo | `compute_bop_curve.py` |
+| Rb\*+2RbCs | `double_polar_rydberg` | 2 carga–dipolo + dipolo–dipolo | `compute_double_rbcs_curves.py` |
 | Rb\*+2Rb neutros | `rb_neutral_perturber` | Fermi s+p | `compute_trimer_curves.py` |
 | Rb\*+Rb+RbCs | `hybrid_neutral_polar` | carga–dipolo + Fermi | `compute_hybrid_curves.py` |
 | Dinámica nuclear | `nonadiabatic_dynamics` | canales acoplados | `analyze_nonadiabatic_*.py` |
@@ -145,7 +146,34 @@ solapamientos y espectro auxiliar.
 Salidas: `plots/hybrid_neutral_polar/data/` y
 `plots/hybrid_neutral_polar/figures/`.
 
-### 5. Dinámica no adiabática
+### 5. Rb\*+RbCs+RbCs
+
+Compara la geometría simétrica `(-R,+R)` con la unilateral `(R,R+D)`. La
+separación unilateral por defecto es `D=300 a0`; en la simétrica la separación
+molecular es `2R`. El Hamiltoniano disperso incluye los campos del ion y del
+electrón Rydberg, interacción dipolo–dipolo y campo DC externo.
+
+```bash
+poetry run python scripts/compute_double_rbcs_curves.py \
+  --geometry both --separation 300 --n-manifold 20 --n-max 3 \
+  --mj 0 1 --fields 0 100 300 500 \
+  --rmin 200 --rmax 1800 --step 10
+
+# Convergencia puntual antes de declarar definitivas las curvas
+poetry run python scripts/check_double_rbcs_convergence.py \
+  --n-manifold 20 --n-max 3 4 --geometry symmetric \
+  --r 400 800 1400 --mj 0 1 --fields 0 500
+
+# Benchmark de la base pendular contraída experimental
+poetry run python scripts/check_double_rbcs_contracted.py \
+  --n-manifold 20 --primitive-n-max 8 --rotor-keep 1 2 3 4 \
+  --geometry symmetric --r 800 --mj 0 --field 0
+```
+
+Salidas: `plots/rb_rbcs_rbcs_polar/{data,figures}`. Detalles y límites del
+modelo: [`docs/analysis_rb_rbcs_rbcs_n20.md`](docs/analysis_rb_rbcs_rbcs_n20.md).
+
+### 6. Dinámica no adiabática
 
 El paquete implementa acoplamiento de derivada, normalización energética,
 canales acoplados, estabilización, tasas de decaimiento y factores de
@@ -174,7 +202,7 @@ No se debe aplicar este pipeline a una curva nueva antes de validar su
 convergencia, referencia energética y seguimiento. Véase
 [`docs/PLAN_nonadiabatic_dynamics.md`](docs/PLAN_nonadiabatic_dynamics.md).
 
-### 6. Diagramas de geometría
+### 7. Diagramas de geometría
 
 ```bash
 poetry run python scripts/draw_geometry.py \
@@ -215,6 +243,7 @@ src/trimero/
     ├── polar_rydberg/          motor polar genérico
     ├── rb_krb_polar/           operador carga–dipolo + legado compatible
     ├── rb_rbcs_polar/          configuración pública RbCs
+    ├── double_polar_rydberg/   dos rotores RbCs, matrices dispersas
     ├── rb_neutral_perturber/   Fermi moderno y legado
     ├── hybrid_neutral_polar/   sistema híbrido
     └── nonadiabatic_dynamics/  dinámica nuclear

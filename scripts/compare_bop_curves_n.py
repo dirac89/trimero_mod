@@ -8,9 +8,15 @@ mismo cero de energía relativo a cada manifold) y los superpone en un único
 eje, en unidades reducidas R/(2n^2) para poder comparar la forma del pozo
 entre manifolds de tamaño muy distinto.
 
+`--molecule` es OBLIGATORIO: sin él, el default silencioso `krb` fue lo que
+hizo que la primera Fase A saliera con KRb creyéndose RbCs. Además se comprueba
+contra el campo `molecule` que cada .npz lleva dentro, y los .npz sin ese campo
+(esquema viejo, anterior al registro de moléculas) se rechazan en vez de
+suponer que son de la molécula pedida.
+
 USO
 ---
-    poetry run python scripts/compare_bop_curves_n.py --n 24 25 26 27
+    poetry run python scripts/compare_bop_curves_n.py --molecule rbcs --n 24 25 26 27
 """
 import argparse
 import os
@@ -27,7 +33,8 @@ def parse_args():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--n", type=int, nargs="+", default=[24, 25, 26, 27])
-    ap.add_argument("--molecule", choices=tuple(MOLECULES), default="krb")
+    ap.add_argument("--molecule", choices=tuple(MOLECULES), required=True,
+                    help="molécula polar (OBLIGATORIO, sin valor por defecto)")
     ap.add_argument("--mj", type=int, default=0)
     ap.add_argument("--npz-dir", default=None)
     ap.add_argument("--out", default=None)
@@ -46,6 +53,8 @@ def main():
     root = f"plots/rb_{molecule.key}_polar"
     args.npz_dir = args.npz_dir or os.path.join(root, "data")
     args.out = args.out or os.path.join(root, "figures", f"fig_compare_n_MJ{args.mj}.png")
+    print(f"molécula: {molecule.label}   B = {molecule.B_ghz:.6f} GHz   "
+          f"d = {molecule.dipole_debye:.3f} D   datos en {args.npz_dir}")
     colors = plt.cm.viridis(np.linspace(0.1, 0.85, len(args.n)))
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.6))
@@ -56,9 +65,15 @@ def main():
         if not os.path.exists(npz):
             raise FileNotFoundError(
                 f"{npz} no existe. Corre antes: "
-                f"scripts/compute_bop_curve.py --n-manifold {n} --mj {args.mj}")
+                f"scripts/compute_bop_curve.py --molecule {molecule.key} "
+                f"--n-manifold {n} --mj {args.mj}")
         d = np.load(npz)
-        if "molecule" in d.files and str(d["molecule"]) != molecule.key:
+        if "molecule" not in d.files:
+            raise ValueError(
+                f"{npz} no declara su molécula (esquema anterior al registro de "
+                f"moléculas). No se puede suponer que sea {molecule.key}: "
+                f"recalcúlalo con compute_bop_curve.py --molecule {molecule.key}.")
+        if str(d["molecule"]) != molecule.key:
             raise ValueError(f"{npz} pertenece a {d['molecule']}, no a {molecule.key}")
         R, E = d["R"], d["E"]
         i_deep = int(np.nanargmin(E))
@@ -79,11 +94,17 @@ def main():
     ax1.set_title("escala absoluta")
     ax2.set_title("escala reducida ($R/2n^2$)")
 
+    # Las constantes van en la figura a propósito: la Fase A se calculó una vez
+    # con KRb creyéndose RbCs, y un título que sólo dice el nombre del sistema no
+    # habría delatado nada. Con B y d escritas, la figura se contradice sola.
     fig.suptitle(
         rf"Rb*-{molecule.label}, curvas BOP $M_J=%d$ para varios $n$   —   "
         r"$H_{ad} = H_A + H_{mol}$  (Ec. 1, Aguilera-Fernández et al. 2015)"
-        % args.mj, fontsize=11)
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
+        % args.mj
+        + f"\n{molecule.label}:  $B$ = {molecule.B_ghz:.6f} GHz,  "
+          f"$d$ = {molecule.dipole_debye:.3f} D",
+        fontsize=11)
+    fig.tight_layout(rect=[0, 0, 1, 0.90])
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, dpi=150)
     print(f"PNG guardado en {args.out}\n")

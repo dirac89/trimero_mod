@@ -42,13 +42,25 @@ necesario aunque no haya V_Fermi: los estados de (n+1)d y (n+2)p producen cruces
 evitados con las del manifold, y un índice fijo cambiaría de objeto por el
 camino. Ver `docs/analysis_base_correcta_3_vecinos.md` §5.1.
 
+QUÉ MOLÉCULA POLAR
+------------------
+`--molecule` es OBLIGATORIO y no tiene valor por defecto. Antes lo tenía
+(`krb`), y esa es exactamente la razón por la que la Fase A del plan de figuras
+se calculó con KRb creyendo que era RbCs: un default silencioso no aparece en la
+línea de órdenes que uno copia al documento, así que nada delata la molécula
+usada. Ahora hay que decirla siempre, y queda escrita en el `.npz`
+(`molecule`, `B_hz`, `d_debye`) y en el título de la figura.
+
+Cada molécula se instancia con SU clase de sistema (`SYSTEM_FOR_MOLECULE`):
+`rbcs` → `RbRbCsPolarSystem`, `krb` → `PolarBOPSystem(molecule=KRB)`.
+
 USO
 ---
-    # Fig. 1 de Aguilera-Fernández 2015 (los números verificados)
-    poetry run python scripts/compute_bop_curve.py --n-manifold 25 --mj 0 1
+    # Fig. 1 de Aguilera-Fernández 2015, Rb*-KRb (los números verificados)
+    poetry run python scripts/compute_bop_curve.py --molecule krb --n-manifold 25 --mj 0 1
 
-    # Un manifold distinto, sin figura
-    poetry run python scripts/compute_bop_curve.py --n-manifold 24 --mj 0 --no-plot
+    # Rb*-RbCs, un manifold distinto, sin figura
+    poetry run python scripts/compute_bop_curve.py --molecule rbcs --n-manifold 24 --mj 0 --no-plot
 """
 import argparse
 import os
@@ -63,16 +75,33 @@ from trimero.systems.polar_molecule import MOLECULES, get_molecule
 from trimero.systems.polar_rydberg import GHZ_PER_HARTREE as GHZ, PolarBOPSystem
 from trimero.systems.rb_krb_polar.bop_system import BOPSystem
 from trimero.systems.rb_krb_polar.rb_defects import DELTA0_NS_PAPER
+from trimero.systems.rb_rbcs_polar import RbRbCsPolarSystem
 
 RULE = "=" * 92
 N_KEEP = 250          # autovalores guardados por punto, para el fondo de la figura
+
+# Clase de sistema por molécula. `PolarBOPSystem` es genérico y valdría para las
+# dos, pero la clase específica es la que fija sus constantes sin que quien
+# llama pueda contradecirlas por descuido, que es el fallo que se corrige aquí.
+SYSTEM_FOR_MOLECULE = {"rbcs": RbRbCsPolarSystem}
+
+
+def build_system(molecule, **kwargs):
+    """Instancia el sistema polar de esta molécula, con su clase específica."""
+    cls = SYSTEM_FOR_MOLECULE.get(molecule.key)
+    if cls is None:
+        return PolarBOPSystem(molecule=molecule, **kwargs)
+    system = cls(**kwargs)          # la clase específica fija molecule ella misma
+    assert system.molecule is molecule
+    return system
 
 
 def parse_args():
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--molecule", choices=tuple(MOLECULES), default="krb",
-                    help="molécula polar: krb o rbcs")
+    ap.add_argument("--molecule", choices=tuple(MOLECULES), required=True,
+                    help="molécula polar (OBLIGATORIO, sin valor por defecto): "
+                         + " o ".join(sorted(MOLECULES)))
     ap.add_argument("--n-manifold", type=int, default=25,
                     help="n del manifold cuasi-degenerado (l >= 3)")
     ap.add_argument("--n-max", type=int, default=6,
@@ -210,9 +239,9 @@ def main():
     molecule = get_molecule(args.molecule)
     root = f"plots/rb_{molecule.key}_polar"
     args.npz_dir = args.npz_dir or f"{root}/data"
-    sysm = PolarBOPSystem(molecule=molecule, n_manifold=args.n_manifold,
-                          N_max=args.n_max,
-                          delta0_ns=DELTA0_NS_PAPER)
+    sysm = build_system(molecule, n_manifold=args.n_manifold,
+                        N_max=args.n_max,
+                        delta0_ns=DELTA0_NS_PAPER)
     n = sysm.n_manifold
     L = {0: "s", 1: "p", 2: "d"}
 
@@ -220,6 +249,9 @@ def main():
     print(f"Curvas BOP Rb*-{molecule.label}   —   H_ad = H_A + H_mol   (SIN pseudopotencial "
           "de Fermi)")
     print(RULE)
+    print(f"\n  molécula: {molecule.label} (key={molecule.key})   "
+          f"B = {molecule.B_ghz:.6f} GHz   d = {molecule.dipole_debye:.3f} D   "
+          f"clase: {type(sysm).__name__}")
     print(f"\n  manifold n={n} (l={sysm.l_min}..{sysm.l_max}) + "
           + " + ".join(f"{sysm.levels[l]}{L[l]}" for l in (2, 1, 0)))
     print(f"  delta0_ns = {DELTA0_NS_PAPER}   cero de energía: "

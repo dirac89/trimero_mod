@@ -43,6 +43,9 @@ polar y perturbador neutro—; ver `STATUS.md` para la separación.
   producción del sistema polar puro Rb\*+RbCs.
 - [`analysis_rb_rbcs_curvas_n25.md`](analysis_rb_rbcs_curvas_n25.md): curvas
   BOP y orientación completas de Rb\*+RbCs para n=25.
+- [`analysis_rb_rbcs_rbcs_n20.md`](analysis_rb_rbcs_rbcs_n20.md): modelo
+  disperso de dos rotores RbCs, geometrías simétrica/unilateral, benchmark y
+  estado de convergencia para n=20.
 
 | Documento | Contenido |
 |---|---|

@@ -25,6 +25,7 @@ mathlib ──► basis ──► rb_krb_polar/charge_dipole
                     │          │                    │
                     │          ▼                    ▼
                     │     Rb*+KRb              Rb*+RbCs
+                    │                               ├──► Rb*+2RbCs
                     │                               │
                     ▼                               │
           rb_neutral_perturber                      │
@@ -40,6 +41,7 @@ mathlib ──► basis ──► rb_krb_polar/charge_dipole
 | Sistema | Hamiltoniano |
 |---|---|
 | polar puro | `H_A + B N² - d·(F_ion + F_elec)` |
+| polar doble | `H_A + Σ_i[B N_i² - d_i·F_ryd(R_i)] + V_dd + H_F` |
 | neutro | `H_A + F_ext·r + V_Fermi` |
 | híbrido | `H_A + H_mol(R2) + V_Fermi^pi(R1)` |
 | dinámica | ecuación nuclear sobre BOP y acoplamientos derivados |
@@ -72,6 +74,10 @@ src/trimero/
     │   └── bop_system.py        BOPSystem histórico compatible
     ├── rb_rbcs_polar/
     │   └── __init__.py          RbRbCsPolarSystem
+    ├── double_polar_rydberg/
+    │   ├── basis.py             base de dos rotores, bloques M_J
+    │   ├── contracted.py        base pendular local contraída experimental
+    │   └── system.py            Hamiltoniano disperso y solver selectivo
     ├── rb_neutral_perturber/
     │   ├── fermi_krb.py         FermiPseudopotential moderno
     │   ├── linear_trimer.py     sistema lineal moderno y validado
@@ -206,6 +212,9 @@ carácter pertinente.
 | `compare_orientation_n.py` | comparación polar | `figures/` |
 | `plot_orientation_alignment.py` | orientación y alineamiento polar, más rotor de referencia | `figures/` |
 | `compute_field_curves.py` | KRb/RbCs polar con campo DC paralelo a Z | misma raíz; un panel por campo |
+| `compute_double_rbcs_curves.py` | dos RbCs, BOP y orientación | `plots/rb_rbcs_rbcs_polar/` |
+| `check_double_rbcs_convergence.py` | convergencia del sistema polar doble | terminal |
+| `check_double_rbcs_contracted.py` | convergencia pendular contraída | terminal |
 | `check_polar_convergence.py` | convergencia `N_max` | terminal |
 | `compute_trimer_curves.py` | perturbador neutro | `plots/rb_neutral_perturber/` |
 | `compute_hybrid_curves.py` | híbrido | `plots/hybrid_neutral_polar/` |
