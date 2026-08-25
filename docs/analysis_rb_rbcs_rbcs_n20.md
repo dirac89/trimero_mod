@@ -225,3 +225,45 @@ poetry run python scripts/compute_double_rbcs_curves.py \
 No debe añadirse `--reuse` a ese comando, porque los NPZ existentes fueron
 calculados antes del sub-stepping. Los restantes datasets del proyecto no
 cambian y pueden seguir conservándose o reutilizándose con `--reuse`.
+
+## Regeneración con sub-stepping adaptativo (25-ago-2026)
+
+Se regeneraron los 16 datasets que tenían al menos un punto con
+`overlap < 0.7`. Se usaron `--bisect-max-depth 3` y `--min-substep 2.0` para
+limitar el coste recursivo. El canario `symmetric, M_J=1, F=300 V/m` se
+ejecutó con los defaults `k=80`, `max-k=320`; tardó `1919.5 s` y redujo los
+avisos de 27 a 9. El resto se ejecutó con la configuración original
+`k=40`, `max-k=160`, generalmente en parejas de procesos.
+
+| geometría | M_J | F (V/m) | bajos antes | bajos después | tiempo (s) |
+|---|---:|---:|---:|---:|---:|
+| simétrica | 0 | 0 | 9 | 10 | 1471.4 |
+| simétrica | 0 | 100 | 10 | 11 | 1563.8 |
+| simétrica | 0 | 300 | 9 | 11 | 1885.3 |
+| simétrica | 0 | 500 | 19 | 13 | 2040.5 |
+| simétrica | 1 | 0 | 23 | 14 | 1385.2 |
+| simétrica | 1 | 100 | 24 | 21 | 1675.1 |
+| simétrica | 1 | 300 | 27 | 9 | 1919.5 |
+| simétrica | 1 | 500 | 17 | 9 | 981.5 |
+| unilateral | 0 | 0 | 22 | 15 | 1469.4 |
+| unilateral | 0 | 100 | 54 | 21 | 1851.8 |
+| unilateral | 0 | 300 | 42 | 38 | 2888.5 |
+| unilateral | 0 | 500 | 49 | 40 | 3061.0 |
+| unilateral | 1 | 0 | 31 | 15 | 1396.2 |
+| unilateral | 1 | 100 | 43 | 30 | 1965.6 |
+| unilateral | 1 | 300 | 32 | 25 | 3449.8 |
+| unilateral | 1 | 500 | 19 | 17 | 3020.7 |
+
+El total pasa de 430 a 299 puntos bajos: 131 puntos menos (`30.5 %`). La suma
+de `elapsed_seconds` de los 16 NPZ es `32025.1 s` (`8.90 h`) de cómputo por
+caso. Esta cifra suma procesos que se ejecutaron en paralelo y no equivale al
+tiempo de pared. Hubo además un intento de cuatro procesos abortado tras
+`42.7 min` de pared por contención; no produjo datasets y no está incluido en
+la suma anterior.
+
+El sub-stepping es especialmente efectivo en los casos con discontinuidades
+más densas, pero no garantiza una reducción monótona: tres casos simétricos
+con `M_J=0` aumentaron ligeramente su número de avisos. La geometría
+unilateral con `F=300,500 V/m` conserva muchos puntos ambiguos incluso tras la
+regeneración conservadora. Las figuras se regeneraron desde los nuevos NPZ
+usando `--reuse`; `N_max=3` continúa siendo exploratorio y no convergido.
