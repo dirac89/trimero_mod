@@ -291,3 +291,39 @@ tres casos simétricos y dos de los tres unilaterales permanecen sin cambios al
 duplicar la ventana espectral. En el caso unilateral restante sí ocultaban una
 mejora moderada, a costa de un tiempo apreciablemente mayor. Los otros diez
 datasets no se regeneraron.
+
+## Recuperación de rama tras fallo catastrófico (26-ago-2026)
+
+Se añadió un fallback de resembrado local cuando, después de agotar la
+bisección adaptativa, el solapamiento cae por debajo de
+`--catastrophic-overlap 0.15`. El nuevo estado se selecciona por máximo
+solapamiento con `manifold_seed` evaluado en el mismo radio, no con el vector
+arrastrado desde el radio anterior. Los NPZ registran estos puntos en el array
+booleano `resembrado`.
+
+Se regeneraron únicamente los cinco datasets con fallos catastróficos
+documentados, usando `k=80`, `max-k=320`, `--bisect-max-depth 3` y
+`--min-substep 2.0`:
+
+| geometría | M_J | F (V/m) | overlap<0.1 antes | después | resembrados | E(200 a0) antes/después (GHz) | tiempo (s) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| simétrica | 1 | 100 | 12 | 1 | 3 | -107.81 / -127.30 | 2508.8 |
+| unilateral | 0 | 300 | 17 | 1 | 2 | -18.83 / -131.12 | 3333.0 |
+| unilateral | 0 | 500 | 32 | 1 | 1 | -14.41 / -112.67 | 2370.8 |
+| unilateral | 1 | 100 | 13 | 0 | 1 | -21.38 / -153.40 | 3023.9 |
+| unilateral | 1 | 300 | 10 | 0 | 1 | -27.79 / -152.59 | 2169.1 |
+
+El total de fallos con `overlap<0.1` baja de 84 a 3; la suma de tiempos es
+`13405.6 s` (`3.72 h`). La recuperación elimina la propagación de los saltos
+catastróficos y vuelve a conectar ramas profundamente ligadas. En el caso
+`unilateral, M_J=0, F=500 V/m`, la rama seguida llega a `-112.67 GHz` en
+`R=200 a0`, en lugar de `-14.41 GHz`. No alcanza, sin embargo, el autovalor
+de `-179.71 GHz` localizado con una `sigma` dirigida específicamente a ese
+pozo: el criterio de `manifold_seed` recupera una rama profunda y coherente,
+pero no garantiza seleccionar el mínimo absoluto del espectro.
+
+Estos resultados **invalidan cualquier lectura previa de «aplanamiento con
+el campo»** basada en los datasets anteriores a este fix: la aparente pérdida
+del pozo era, en varios casos, un salto del tracker a otra rama y no la
+desaparición física del estado ligado. Los otros once datasets no se
+regeneraron.

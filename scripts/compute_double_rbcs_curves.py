@@ -29,6 +29,8 @@ def parse_args():
     p.add_argument("--step", type=float, default=10.0)
     p.add_argument("--weight", type=float, default=0.5)
     p.add_argument("--overlap", type=float, default=0.7)
+    p.add_argument("--catastrophic-overlap", type=float, default=0.15,
+                   help="umbral para resembrar una rama perdida")
     p.add_argument("--min-substep", type=float, default=0.5,
                    help="paso mínimo de la continuación adaptativa [a0]")
     p.add_argument("--bisect-max-depth", type=int, default=6,
@@ -163,6 +165,7 @@ def sweep(system, R, mj, geometry, args, field):
     COS1 = np.full(len(R), np.nan)
     COS2 = np.full(len(R), np.nan)
     KUSED = np.zeros(len(R), dtype=int)
+    RESEEDED = np.zeros(len(R), dtype=bool)
     spectrum = np.full((len(R), args.context), np.nan)
     warnings = []
     previous = None
@@ -199,6 +202,23 @@ def sweep(system, R, mj, geometry, args, field):
                 ),
             )
 
+        reseeded = (
+            previous is not None
+            and result["quality"] < args.catastrophic_overlap
+        )
+        if reseeded:
+            seed_energy, local_seed = system.manifold_seed(
+                radius, mj, geometry, args.separation, field
+            )
+            local_sigma = (
+                seed_energy - system.E_manifold
+            ) * GHZ_PER_HARTREE
+            result = _continuation_attempt(
+                system, radius, mj, geometry, args, field, local_sigma, mask,
+                seed_vector=local_seed,
+            )
+            RESEEDED[idx] = True
+
         vector = result["vector"]
         relative = result["relative"]
         selected = result["selected"]
@@ -217,7 +237,7 @@ def sweep(system, R, mj, geometry, args, field):
         previous = vector
         previous_radius = radius
         sigma = float(E[idx])
-        if O[idx] >= args.overlap:
+        if reseeded or O[idx] >= args.overlap:
             last_good_vector = vector
             last_good_radius = radius
             last_good_sigma = sigma
@@ -232,6 +252,7 @@ def sweep(system, R, mj, geometry, args, field):
     print(f"  terminado en {elapsed:.1f}s; avisos de continuidad: {len(warnings)}")
     return dict(
         R=R, E=E, W=W, overlap=O, COS1=COS1, COS2=COS2,
+        resembrado=RESEEDED,
         k_used=KUSED, spectrum=spectrum,
         warning_R=np.array([w[0] for w in warnings]),
         warning_overlap=np.array([w[1] for w in warnings]),
@@ -247,6 +268,7 @@ def save(path, data, args, geometry, mj, field, dim):
         molecule="rbcs", n_manifold=args.n_manifold, N_max=args.n_max,
         M_J=mj, field_v_per_m=field, character_weight=args.weight,
         overlap_threshold=args.overlap, min_substep_a0=args.min_substep,
+        catastrophic_overlap_threshold=args.catastrophic_overlap,
         bisect_max_depth=args.bisect_max_depth, dimension=dim, schema_version=1,
     )
 
@@ -329,6 +351,8 @@ def main():
         raise SystemExit("se requiere rmax>rmin y step>0")
     if args.min_substep <= 0 or args.bisect_max_depth < 0:
         raise SystemExit("min-substep debe ser >0 y bisect-max-depth >=0")
+    if not 0.0 <= args.catastrophic_overlap <= 1.0:
+        raise SystemExit("catastrophic-overlap debe estar entre 0 y 1")
     geometries = ("symmetric", "unilateral") if args.geometry == "both" else (args.geometry,)
     R = np.arange(args.rmin, args.rmax + 1e-9, args.step)
     if args.workers < 1:

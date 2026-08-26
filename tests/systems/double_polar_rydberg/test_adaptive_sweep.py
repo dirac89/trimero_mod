@@ -48,7 +48,7 @@ def args(**overrides):
     values = dict(
         separation=300.0, weight=0.5, overlap=0.9, k=4, max_k=4,
         context=2, sigma_ghz=-30.0, min_substep=0.01,
-        bisect_max_depth=6,
+        bisect_max_depth=6, catastrophic_overlap=0.15,
     )
     values.update(overrides)
     return SimpleNamespace(**values)
@@ -97,3 +97,46 @@ def test_bisection_reduces_low_overlap_grid_points():
     assert 1.0 in adaptive_system.calls
     assert np.array_equal(adaptive["R"], grid)
     assert adaptive["E"].shape == disabled["E"].shape == grid.shape
+
+
+class LostBranchSystem(RotatingBranchSystem):
+    """Hace que la continuación elija una rama rota que la semilla recupera."""
+
+    def __init__(self):
+        super().__init__(angular_rate=0.0)
+
+    def manifold_seed(self, radius, mj, geometry, separation, field):
+        state = (
+            np.array([1.0, 0.0, 0.0])
+            if radius == 2.0 else np.array([0.0, 1.0, 0.0])
+        )
+        energy = 0.0 if radius == 2.0 else -10.0 / CURVES.GHZ_PER_HARTREE
+        return energy, state
+
+    def solve_near(
+        self, radius, mj, geometry, separation, field, k, sigma_ghz,
+    ):
+        self.calls.append(float(radius))
+        if radius == 2.0:
+            vectors = np.eye(3)
+            energies = np.array([0.0, 1.0, 2.0])
+        else:
+            correct = np.array([0.0, 1.0, 0.0])
+            broken = np.array([np.sqrt(0.1), 0.0, np.sqrt(0.9)])
+            distractor = np.array([0.0, 1.0, 0.0])
+            vectors = np.column_stack((correct, broken, distractor))
+            energies = np.array([-10.0, -1.0, 1.0])
+        return energies / CURVES.GHZ_PER_HARTREE, vectors
+
+
+def test_catastrophic_overlap_reseeds_lost_branch():
+    result = CURVES.sweep(
+        LostBranchSystem(), np.array([1.0, 2.0]), 0, "symmetric",
+        args(overlap=0.7, catastrophic_overlap=0.15, bisect_max_depth=0),
+        0.0,
+    )
+
+    assert result["resembrado"].tolist() == [True, False]
+    assert result["W"][0] > 0.5
+    assert result["overlap"][0] == 1.0
+    assert result["E"][0] == -10.0
