@@ -267,3 +267,27 @@ con `M_J=0` aumentaron ligeramente su número de avisos. La geometría
 unilateral con `F=300,500 V/m` conserva muchos puntos ambiguos incluso tras la
 regeneración conservadora. Las figuras se regeneraron desde los nuevos NPZ
 usando `--reuse`; `N_max=3` continúa siendo exploratorio y no convergido.
+
+Se hizo una segunda pasada sobre los seis casos menos concluyentes usando los
+defaults `k=80`, `max-k=320`, y manteniendo `--bisect-max-depth 3` y
+`--min-substep 2.0`. Los valores «antes» de la tabla siguiente son los
+resultados de la primera pasada con `k=40`, `max-k=160`; no son los valores de
+los datasets originales previos al sub-stepping.
+
+| geometría | M_J | F (V/m) | bajos antes | bajos después | tiempo (s) |
+|---|---:|---:|---:|---:|---:|
+| simétrica | 0 | 0 | 10 | 10 | 1728.4 |
+| simétrica | 0 | 100 | 11 | 11 | 2721.1 |
+| simétrica | 0 | 300 | 11 | 11 | 2618.1 |
+| unilateral | 0 | 300 | 38 | 32 | 4972.6 |
+| unilateral | 0 | 500 | 40 | 40 | 5734.5 |
+| unilateral | 1 | 300 | 25 | 25 | 3175.1 |
+
+En conjunto, esta segunda pasada reduce los puntos bajos de 135 a 129 y suma
+`20949.8 s` (`5.82 h`) de cómputo por caso. Sólo `unilateral, M_J=0,
+F=300 V/m` mejora, de 38 a 32 puntos. Por tanto, los valores reducidos
+`k=40`, `max-k=160` **no eran la causa general** de la falta de mejora: los
+tres casos simétricos y dos de los tres unilaterales permanecen sin cambios al
+duplicar la ventana espectral. En el caso unilateral restante sí ocultaban una
+mejora moderada, a costa de un tiempo apreciablemente mayor. Los otros diez
+datasets no se regeneraron.
