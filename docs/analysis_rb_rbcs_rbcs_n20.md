@@ -301,9 +301,10 @@ solapamiento con `manifold_seed` evaluado en el mismo radio, no con el vector
 arrastrado desde el radio anterior. Los NPZ registran estos puntos en el array
 booleano `resembrado`.
 
-Se regeneraron únicamente los cinco datasets con fallos catastróficos
-documentados, usando `k=80`, `max-k=320`, `--bisect-max-depth 3` y
-`--min-substep 2.0`:
+Se regeneraron inicialmente cinco datasets con fallos catastróficos usando
+`k=80`, `max-k=320`, `--bisect-max-depth 3` y `--min-substep 2.0`. Una ronda
+posterior completó los dos casos pendientes con los defaults
+`--bisect-max-depth 6` y `--min-substep 0.5`:
 
 | geometría | M_J | F (V/m) | overlap<0.1 antes | después | resembrados | E(200 a0) antes/después (GHz) | tiempo (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -312,10 +313,16 @@ documentados, usando `k=80`, `max-k=320`, `--bisect-max-depth 3` y
 | unilateral | 0 | 500 | 32 | 1 | 1 | -14.41 / -112.67 | 2370.8 |
 | unilateral | 1 | 100 | 13 | 0 | 1 | -21.38 / -153.40 | 3023.9 |
 | unilateral | 1 | 300 | 10 | 0 | 1 | -27.79 / -152.59 | 2169.1 |
+| simétrica | 1 | 0 | 9 | 1 | 3 | -127.29 / -171.90 | 2335.9 |
+| unilateral | 1 | 500 | 10 | 1 | 2 | -28.09 / -117.53 | 3152.5 |
 
-El total de fallos con `overlap<0.1` baja de 84 a 3; la suma de tiempos es
-`13405.6 s` (`3.72 h`). La recuperación elimina la propagación de los saltos
-catastróficos y vuelve a conectar ramas profundamente ligadas. En el caso
+En los siete datasets regenerados, el total de fallos con `overlap<0.1` baja
+de 103 a 5; la suma de tiempos es `18894.0 s` (`5.25 h`). En la última ronda,
+los dos casos pasan respectivamente de 14 a 5 y de 17 a 7 puntos con
+`overlap<0.7`. El acumulado sobre los 16 datasets evoluciona de 430 puntos
+bajos originales a 293, después a 225 y finalmente a **206**. La recuperación
+elimina la propagación de los saltos catastróficos y vuelve a conectar ramas
+profundamente ligadas. En el caso
 `unilateral, M_J=0, F=500 V/m`, la rama seguida llega a `-112.67 GHz` en
 `R=200 a0`, en lugar de `-14.41 GHz`. No alcanza, sin embargo, el autovalor
 de `-179.71 GHz` localizado con una `sigma` dirigida específicamente a ese
@@ -325,5 +332,5 @@ pero no garantiza seleccionar el mínimo absoluto del espectro.
 Estos resultados **invalidan cualquier lectura previa de «aplanamiento con
 el campo»** basada en los datasets anteriores a este fix: la aparente pérdida
 del pozo era, en varios casos, un salto del tracker a otra rama y no la
-desaparición física del estado ligado. Los otros once datasets no se
-regeneraron.
+desaparición física del estado ligado. En la última ronda no se regeneraron
+los otros catorce datasets.
