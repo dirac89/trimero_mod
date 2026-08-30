@@ -1,158 +1,102 @@
 ---
 name: research-doc
-description: Crear y guardar documentación de investigación en docs/ siguiendo el formato estándar
+description: Documenta una investigación o una ronda de cálculo en docs/, la registra en docs/INDEX.md y marca como revocado lo que el resultado nuevo invalide. Usa esto al cerrar cualquier ronda con conclusiones.
 ---
 
 # Skill: research-doc
 
 ## Propósito
-Documentar cualquier investigación (papers, análisis, teoría, web) en formato Markdown estructurado dentro de `docs/`.
+
+Que quien llegue sin contexto dentro de un mes sepa **qué es cierto hoy** sin
+reconstruir la historia. `docs/` tiene ~35 documentos y varias rectificaciones
+encadenadas: un documento sin registrar en el índice, o una conclusión revocada
+sin marcar, es una trampa para la siguiente ronda.
 
 ## Trigger
-- Usuario dice: "documenta la investigación", "crea research doc", "guarda lo investigado"
-- O: `/research-doc`
+
+`/research-doc`, o: «documenta esto», «guarda lo investigado», y al cerrar
+cualquier ronda de cálculo con conclusiones.
 
 ## Flujo
 
-1. **Identificar tipo de investigación**:
-   - ¿Paper/artículo científico?
-   - ¿Análisis de datos?
-   - ¿Notas teóricas?
-   - ¿Búsqueda web?
-   - ¿Comparación de métodos?
+### 1. Redactar
+Ubicación `docs/`, nomenclatura por tipo:
 
-2. **Recopilar información**:
-   - Resumen del tema
-   - Conceptos clave
-   - Fórmulas/ecuaciones relevantes
-   - Fuentes (DOI, URL, referencias)
+| tipo | nombre |
+|---|---|
+| investigación general | `research_<tema>.md` |
+| resumen de paper | `paper_<titulo_corto>.md` |
+| análisis de datos/ronda | `analysis_<tema>.md` |
+| notas teóricas | `theory_<concepto>.md` |
+| plan de varias rondas | `PLAN_<tema>.md` |
 
-3. **Crear documento Markdown**:
-   - Ubicación: `docs/`
-   - Nombre: `{tipo}_{tema_corto}.md`
-   - Estructura: encabezado, resumen, contenido, conclusiones, referencias
+Si la ronda fue un cálculo, el documento **debe** incluir:
 
-4. **Guardar y registrar**:
-   - Archivo creado en `docs/`
-   - Commit con mensaje: "docs: add research on [tema]"
-   - Actualizar índice si existe `docs/INDEX.md`
+- **la identidad completa**: sistema, molécula, `n`, `N_max`, `M_J`/simetría, campo;
+- **la orden exacta** que lo produjo, con todos los flags explícitos;
+- **la ruta del `.npz`** resultante;
+- **las anclas numéricas** verificadas, con su valor y contra qué se comparan;
+- lo que el auditor (`/dataset-check`) haya señalado, incluidos los tramos
+  dudosos. No se maquilla un resultado con reservas.
 
-## Plantilla Estándar
+### 2. Registrar en `docs/INDEX.md`
+**Una entrada nueva no existe hasta que está en el índice.** Respeta la sección
+y el estilo de las entradas ya presentes.
+
+### 3. Rectificar sin borrar
+Si el resultado revoca algo anterior (regla §7 de `.claude/CLAUDE.md`):
+
+- localiza el documento afectado (`grep` por el número, la figura o la afirmación);
+- añade **arriba** un aviso fechado: qué queda revocado, por qué, y qué lo sustituye;
+- **no borres ni reescribas el texto revocado**;
+- documenta **el mecanismo**, no sólo el error. Lo reutilizable es «un default
+  silencioso no aparece en la orden que copias al documento», no «era KRb».
+- si lo revocado tocaba `STATUS.md`, actualízalo también.
+
+Formato a imitar: la rectificación del 2026-08-24 en
+`docs/PLAN_figuras_publicacion.md` y `docs/analysis_faseA_curvas_bop_varios_n.md` §0.
+
+### 4. Verificar `docs/STATUS.md`
+Es la página de entrada: la tabla de sistemas, las anclas y la lista de «lo que
+no está hecho» deben seguir siendo verdad tras esta ronda.
+
+Para los pasos 2-4 puedes delegar en el subagente **`docs-curator`**, que edita
+sólo dentro de `docs/`.
+
+## Plantilla
 
 ```markdown
 # {Título descriptivo}
 
-**Fecha**: {YYYY-MM-DD}  
-**Autor**: {Nombre}  
-**Relevancia**: {Por qué es importante para trimero}  
-**Tipo**: {paper|analysis|theory|research|comparison}  
+**Fecha**: {YYYY-MM-DD}
+**Autor**: {Nombre}
+**Relevancia**: {por qué importa para trimero_mod}
+**Tipo**: {paper|analysis|theory|research|comparison}
 
 ## Resumen
-{1-2 párrafos resumiendo lo investigado}
+{1-2 párrafos}
 
-## Palabras Clave
-- keyword1
-- keyword2
-- keyword3
+## Identidad del cálculo        ← si aplica
+sistema, molécula, n, N_max, M_J/simetría, campo, rango de R
+orden exacta ejecutada · fichero .npz producido
 
 ## Contenido Principal
+{secciones según el tema}
 
-### Sección 1
-{Contenido según el tema}
-
-### Sección 2
-{Desarrollo}
-
-## Fórmulas Clave
-```math
-E = \hbar \omega
-H = H_0 + V_{int}
-```
+## Anclas numéricas
+| magnitud | referencia | calculado |
 
 ## Conclusiones y Aplicación al Proyecto
-{Cómo se conecta con trimero_mod, qué cambios o mejoras habilita}
+{qué habilita, qué revoca}
 
 ## Referencias
-- [Nombre Corto](URL/DOI) — Descripción
-- [Paper XYZ](doi.org/...) — Año, autor, resumen
-
-## Notas Adicionales
-{Links, Follow-ups, temas relacionados}
-```
-
-## Ejemplos de Nombres
-
-| Tema | Nombre del Archivo |
-|------|------------------|
-| Potenciales de Fermi | `docs/research_fermi_potentials.md` |
-| Paper sobre diagonalización | `docs/paper_scipy_eigensolver.md` |
-| Análisis de convergencia | `docs/analysis_eigenvalue_convergence.md` |
-| Notas sobre armónicos esféricos | `docs/theory_spherical_harmonics.md` |
-| Comparación C++ vs Python | `docs/comparison_cpp_python_performance.md` |
-| Búsqueda sobre campos eléctricos | `docs/research_electric_field_interaction.md` |
-
-## Ejemplo Completo
-
-```markdown
-# Potenciales de Fermi en Sistemas Trimoleculares
-
-**Fecha**: 2026-08-18  
-**Autor**: Javier Aguilera  
-**Relevancia**: Base teórica de FermiPotentials() en src/trimero/systems/rb_neutral_perturber/fermi_potentials.py  
-**Tipo**: research  
-
-## Resumen
-Los potenciales de Fermi modelan la interacción entre átomos fermionicos 
-mediante un decaimiento exponencial. Este documento resume la formulación 
-matemática y parámetros típicos.
-
-## Palabras Clave
-- Fermi gas
-- Scattering length
-- Contacto interaction
-- Ultracold atoms
-
-## Contenido Principal
-
-### Formulación Matemática
-V(r) = -V₀ * exp(-r/a₀)
-
-### Parámetros Típicos
-- a₀ (longitud de dispersión): 50-500 Bohr
-- V₀ (profundidad): 0.1-1.0 Hartree
-
-## Aplicación al Proyecto
-FermiPotentials usa esta fórmula en get_potential(r_au).
-Parámetros se ajustan según el tipo de átomo (Rb, K, Li).
-
-## Referencias
-- [Quantum Mechanics of Atomic Systems](doi.org/...) — Cohen-Tannoudji et al., 2019
-- [Fermi Contact in Ultracold Gases](URL) — Review, 2020
+- [Nombre](DOI/URL) — autor, año
 ```
 
 ## Cuándo Usar
 
-✓ **Usar este skill cuando**:
-- Investigues un concepto nuevo para el proyecto
-- Leas un paper relevante
-- Analices resultados de simulaciones
-- Explores optimizaciones o métodos alternativos
+✓ Al cerrar una ronda de cálculo con conclusiones; al leer un paper relevante;
+al investigar un concepto nuevo; al tomar una decisión de diseño con
+justificación científica.
 
-✗ **No necesario para**:
-- Cambios de código simples (usa git commit)
-- Conversaciones rápidas sobre bugs
-- Decisiones de triviales
-
-## Ventajas
-
-- **Trazabilidad**: Queda registrado QUÉ se investigó y CUÁNDO
-- **Reutilización**: Futuros trabajos usan el mismo conocimiento
-- **Contexto**: Próximas personas entienden las decisiones de diseño
-- **Reproducibilidad**: Referencias completamente documentadas
-
-## Notas
-
-- Los documentos se versionan con git
-- Usa Markdown para todo: tablas, código, LaTeX para fórmulas
-- Enlaza con otros docs usando `[referencia](path_archivo.md)`
-- Revisa `docs/` regularmente para temas relacionados que expandir
+✗ No hace falta para un bugfix trivial o una conversación rápida.

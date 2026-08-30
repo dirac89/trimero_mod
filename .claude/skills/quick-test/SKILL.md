@@ -1,81 +1,76 @@
 ---
 name: quick-test
-description: Ejecución rápida de prueba con parámetros pequeños para validación
+description: Validación rápida tras un cambio — suite sin los tests lentos y, si el cambio toca un sistema, un barrido corto de pocos puntos. Segundos, no minutos.
 ---
 
 # Skill: quick-test
 
 ## Propósito
-Validar que la simulación funciona correctamente con parámetros pequeños (n1=5, pocos puntos).
+
+Comprobar en menos de un minuto que un cambio no ha roto nada, **antes** de
+gastar minutos en un barrido completo o en la suite entera.
 
 ## Trigger
-- Usuario dice: "prueba rápida", "test", "valida el flujo"
-- O: `/quick-test`
 
-## Flujo Automático
+`/quick-test`, o: «prueba rápida», «valida el flujo», «¿sigue pasando todo?».
 
-1. **Setup**:
-   - n1 = 5 (muy pequeño, rápido)
-   - dc_field_au = 0.1 (campo débil)
-   - radio_min = 1.5 Bohr
-   - radio_max = 3.0 Bohr
-   - num_points = 5 (solo 5 puntos)
+## Flujo
 
-2. **Ejecución**. Lo más rápido y lo primero que hay que probar es la suite:
-   ```bash
-   poetry run pytest -m "not slow"      # 45 tests, ~25 s
-   ```
+### 1. La suite rápida — siempre lo primero
 
-   Barrido corto del camino vigente (unos pocos puntos de R):
-   ```bash
-   poetry run python scripts/compute_bop_curve.py \
-       --n-manifold 25 --mj 0 --rmin 400 --rmax 500 --step 50 --no-plot
-   ```
-
-   Camino legado con parámetros mínimos:
-   ```python
-   from trimero.systems.rb_neutral_perturber.trimer import Trimer_energies_field
-   Trimer_energies_field(n1=5, dc_field_au=0.1)
-   ```
-
-3. **Validación**:
-   - ✓ Datos cargados correctamente
-   - ✓ Matriz Hamiltoniana construida (dimensión esperada)
-   - ✓ Diagonalización exitosa
-   - ✓ Autovalores reales y ordenados
-   - ✓ Archivo `.dat` generado con formato correcto
-
-4. **Reporte**:
-   - Tiempo total de ejecución
-   - Tamaño de matriz Hamiltoniana
-   - Número de autovalores obtenidos
-   - Primeros 3 niveles de energía
-
-## Ejemplo de Salida
-
+```bash
+poetry run pytest -m "not slow"    # ~25 s
 ```
-=== Quick Test ===
-Parámetros: n1=5, dc_field=0.1 au, R=[1.5, 3.0] Bohr, 5 puntos
-Tiempo: 2.34s
 
-✓ Datos cargados
-✓ Matriz H: 45x45
-✓ Diagonalizaciones: 5/5 exitosas
+Deselecciona los tests de caracterización end-to-end (~3.5 min cada uno). Para
+saber cuántos son ahora mismo, sin copiar cifras a mano:
 
-Primeros autovalores (en Hartree):
-  E1 = -0.523
-  E2 = -0.521
-  E3 = -0.515
-
-✓ Test passou: archivo generado 'Trimer_R_sp_wave_N5_R_150_au.dat'
+```bash
+poetry run pytest --collect-only -q | tail -1              # total
+poetry run pytest -m "not slow" --collect-only -q | tail -1  # rápidos / total
 ```
+
+### 2. Barrido corto — sólo si el cambio toca un sistema
+
+Pocos puntos, sin figura. **La molécula es obligatoria**, no hay default:
+
+```bash
+# polar (KRb o RbCs)
+poetry run python scripts/compute_bop_curve.py \
+    --molecule rbcs --n-manifold 25 --mj 0 \
+    --rmin 400 --rmax 500 --step 50 --no-plot
+
+# perturbador neutro
+poetry run python scripts/compute_trimer_curves.py --symmetry Sigma --rmax 600
+```
+
+Escribe en `plots/<sistema>/data/`: si no quieres tocar los datasets buenos, usa
+`--npz-dir` (polar) o un `--out` temporal.
+
+### 3. Validación
+
+- ✓ La suite rápida pasa entera
+- ✓ La matriz se construye con la dimensión esperada
+- ✓ Autovalores reales y ordenados; sin NaN ni Inf
+- ✓ El peso de manifold `W` está por encima del umbral en los puntos calculados
+
+### 4. Reporte
+
+Tiempo, tests pasados/fallados, dimensión del bloque, primeros autovalores y
+`W`. Si algo falla, **el fallo tal cual** — no lo resumas a «un test rojo».
+
+## Qué NO es esto
+
+- **No sustituye a la suite completa antes de commitear** (`poetry run pytest`,
+  ~11 min, incluye los goldens del legado). Y si el cambio toca `mathlib/` o
+  `basis/`, la completa es obligatoria: de esa capa dependen los goldens de
+  todos los sistemas.
+- **No es la vía para validar el camino legado.**
+  `Trimer_energies_field(n1, dc_field_au)` es código **congelado**; sus goldens
+  ya lo cubren en la suite `slow`. No lo llames como validación de rutina.
+- Un golden que se mueve no se regenera: se reporta. Ver `.claude/CLAUDE.md` §5.
 
 ## Cuándo Usar
 
-- Después de cambios en **física** o **matemáticas**
-- Para validar que el proyecto está configurado correctamente
-- Antes de ejecutar simulaciones grandes
-
-## Tiempo Típico
-
-< 5 segundos en máquina estándar.
+Después de un cambio de física o matemáticas, al empezar a trabajar en el
+repositorio, y antes de lanzar cualquier barrido largo.

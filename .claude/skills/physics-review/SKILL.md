@@ -1,111 +1,88 @@
 ---
 name: physics-review
-description: Revisa cambios de física antes de validarlos mediante simulación
+description: Revisa un cambio de física (Hamiltoniano, potenciales, base, unidades, álgebra angular) antes de gastar CPU en él. No ejecuta barridos — analiza y emite veredicto.
 ---
 
 # Skill: physics-review
 
 ## Propósito
-Analizar cambios en la física del código (matriz Hamiltoniana, potenciales, etc.) para detectar inconsistencias antes de ejecutar simulaciones costosas.
+
+Detectar inconsistencias en un cambio de física **antes** de ejecutar
+simulaciones costosas o de commitear algo que mueva un golden.
 
 ## Trigger
-- Usuario dice: "revisa la física", "physics check", "valida el cambio de potencial"
-- O: `/physics-review`
 
-## Checklist de Revisión
-
-### 1. **Matriz Hamiltoniana**
-- [ ] H es Hermitiana (H† = H)
-- [ ] Dimensión correcta para los casos A/B/C/D
-- [ ] Elementos diagonales son reales (energías individuales)
-- [ ] Elementos off-diagonal corresponden a interacciones
-
-### 2. **Potenciales de Fermi**
-- [ ] V(r) es real y decreciente con r
-- [ ] V(r → ∞) → 0 (decaimiento correcto)
-- [ ] Parámetros a0 coherentes con unidades atómicas
-- [ ] Simetría correcta para casos de solapamiento
-
-### 3. **Funciones de Onda y Armónicos Esféricos**
-- [ ] Y_lm(θ, φ) normalizadas correctamente
-- [ ] Derivadas radiales dψ/dr bien calculadas (diferencias finitas)
-- [ ] Overlaps entre funciones de onda < 1
-- [ ] Integración numérica con precisión suficiente
-
-### 4. **Campo Eléctrico**
-- [ ] Matriz de campo diagonal (interacción simple)
-- [ ] Elementos escalados correctamente por n1 y amplitud del campo
-- [ ] Coherencia con convención de signos
-
-### 5. **Unidades y Conversiones**
-- [ ] Entrada en Bohr y Hartree (unidades atómicas)
-- [ ] Conversión a GHz solo en salida (si se aplica)
-- [ ] Factores de conversión verificados (1 Hartree ≈ 27.2 eV)
-
-### 6. **Estabilidad Numérica**
-- [ ] Matriz Hamiltoniana bien condicionada (número de condición < 10^10)
-- [ ] Sin términos divergentes para r → 0
-- [ ] Precisión de máquina suficiente para eigenvalue solver
+`/physics-review`, o: «revisa la física», «valida el cambio de potencial»,
+«¿esto está bien planteado?».
 
 ## Flujo
 
-1. **Identificar cambios**:
-   - Inspecciona `git diff` o archivos modificados
-   - **Primero: ¿de qué sistema físico es el cambio?** `rb_krb_polar/` y
-     `rb_neutral_perturber/` no comparten modelo. Ver `.claude/ARCHITECTURE.md`.
-   - Polar (vigente): `systems/rb_krb_polar/{charge_dipole,bop_system,rb_defects}.py`
-   - Neutro: `systems/rb_neutral_perturber/fermi_krb.py`
-   - Legado congelado: `systems/rb_neutral_perturber/{trimer,fermi_potentials}.py`
-   - Compartido: `systems/rb_atom.py`, `basis/`, `mathlib/`
-   - ⚠️ Si el cambio mueve un golden file, es un cambio de física: **para y
-     repórtalo**, no regeneres el golden.
+### Paso 0 — ¿de qué sistema es el cambio? (obligatorio, primero)
 
-2. **Verificar matemática**:
-   - Revisa derivaciones en comentarios
-   - Compara con referencias teóricas
+Siete paquetes, motores parcialmente compartidos. Este paso es el que más rondas
+ha salvado; ver la tabla completa en `.claude/CLAUDE.md` y el grafo en
+`.claude/ARCHITECTURE.md`.
 
-3. **Inspeccionar código**:
-   - Valida operaciones vectoriales (shapes de numpy arrays)
-   - Verifica ciclos de sumación correctos
+| paquete | Hamiltoniano |
+|---|---|
+| `polar_rydberg/` (genérico), `rb_krb_polar/`, `rb_rbcs_polar/` | `H_A + B N² − d·(F_ion + F_elec)` |
+| `double_polar_rydberg/` | `H_A + Σᵢ[B Nᵢ² − dᵢ·F_ryd(Rᵢ)] + V_dd + H_F` |
+| `rb_neutral_perturber/` | `H_A + F_ext·r + V_Fermi` (legado congelado: `trimer.py`, `fermi_potentials.py`) |
+| `hybrid_neutral_polar/` | `H_A + H_mol(R₂) + V_Fermi^π(R₁)` |
+| `nonadiabatic_dynamics/` | ecuación nuclear sobre las BOP |
+| compartido | `mathlib/`, `basis/`, `rb_atom.py`, `polar_molecule.py` |
 
-4. **Proponer mejoras**:
-   - Simplificar expresiones redundantes
-   - Optimizar operaciones costosas
+Tres banderas rojas inmediatas:
 
-## Salida
+- **`V_Fermi` en un sistema polar puro** → ✗. El pseudopotencial de contacto
+  modela un perturbador **neutro**.
+- **`M_J` usado en el sistema neutro** → ✗. Ahí no hay rotor: el buen número
+  cuántico es `m_l` (Σ ≡ m_l=0, Π ≡ |m_l|=1).
+- **Molécula ambigua** → para. KRb: B=1.114 GHz, d=0.566 D. RbCs: B=490.17 MHz,
+  d=1.225 D. Confundirlas costó una ronda entera
+  (`docs/PLAN_figuras_publicacion.md`).
 
-Un reporte estructurado:
+### Paso 1 — Delegar en el subagente
+
+Para cualquier revisión que no sea trivial, delega en **`physics-reviewer`**
+(`.claude/agents/physics-reviewer.md`): leer Hamiltonianos consume mucho
+contexto, y el subagente devuelve el veredicto sin arrastrarlo a la sesión.
+Pásale el diff o los ficheros tocados.
+
+### Paso 2 — Checklist
+
+1. **Hamiltoniano**: hermítico, diagonal real, dimensión coherente, bloqueado
+   por el buen número cuántico correcto.
+2. **Base**: polar → manifold `(n,l≥3)` + (n+1)d + (n+2)p + (n+3)s (**tres**
+   vecinos; única definición en `rb_defects.neighbor_levels()`). Neutro →
+   n=35 (l≥3) + 38s + 37p + 36d.
+3. **Potenciales**: Fermi real, → 0 en r→∞, sin divergencia en r→0, evaluado en
+   los nodos de tabla. Carga-dipolo con el escalado 1/R⁴ del ion.
+4. **Álgebra angular**: convención canónica de `wigner_3j`/Gaunt. Cambiarla
+   mueve goldens de todos los sistemas (precedente: `586776d`).
+5. **Unidades**: Bohr y Hartree dentro; GHz **sólo** en la salida; cero de
+   energía declarado.
+6. **Estabilidad**: sin divergencias, autovalores reales donde la física lo pide.
+7. **Goldens**: ⚠️ si el cambio puede mover
+   `tests/systems/rb_neutral_perturber/characterization/`, **para y repórtalo**.
+   No se regenera un golden para que encaje.
+
+### Paso 3 — Salida
+
 ```
-✓ Matriz Hamiltoniana: Verificado Hermitiano, dimensión correcta
-✓ Potenciales: Decrecimiento correcto, parámetros coherentes
-⚠ Armónicos esféricos: Revisar normalización en Y_22
-✗ Campo eléctrico: Elemento (1,5) parece incorrecto, verificar cálculo
+SISTEMA: <paquete> · molécula <X> · buen nº cuántico <M_J|m_l>
+CAPA COMPARTIDA: sí/no
 
-Recomendación: Ejecutar /quick-test antes de /run-simulation
+✓ Hamiltoniano: hermítico, dim 1113 para M_J=0 — correcto
+⚠ Base: (n+2)p reescrito a mano en scripts/foo.py:42; usa neighbor_levels()
+✗ Unidades: la conversión a GHz entra en el bucle (charge_dipole.py:118)
+
+GOLDENS EN RIESGO: no
+VEREDICTO: válido con reservas
+SIGUIENTE PASO: /quick-test, y barrido corto antes del completo
 ```
-
-## Ejemplo de Revisión
-
-Si el usuario hace cambio en `systems/rb_neutral_perturber/fermi_potentials.py` (legado congelado):
-
-```python
-# Cambio propuesto:
-def get_potential(self, r_au):
-    # Antes: return self.a * np.exp(-r_au / self.a0)
-    # Ahora:
-    return self.a * np.exp(-r_au / self.a0) * (1 + self.b * r_au)
-```
-
-Claude verifica:
-1. ¿Sigue siendo decreciente? ✓ (si self.b es pequeño)
-2. ¿Límite r → 0? Sigue siendo finito (buen signo)
-3. ¿Límite r → ∞? Sigue decayendo (correcto)
-4. ¿Impacto en matriz H? Se recalculan elementos off-diagonal
-
-Recomendación: **Válido**, ejecutar `/quick-test` para verificar impacto numérico.
 
 ## Notas
 
-- No ejecuta código, solo revisa
-- Útil para cambios teóricos grandes
-- Acelera debugging evitando simulaciones inútiles
+- **No ejecuta barridos.** Comprobaciones numéricas de segundos, sí.
+- Si el veredicto es válido: `/quick-test` y luego `/sweep`.

@@ -240,7 +240,9 @@ sin metadatos compatibles.
 
 ## Tests e invariantes
 
-La suite actual contiene 156 tests. Familias principales:
+El tamaño de la suite lo dice pytest, no este documento
+(`poetry run pytest --collect-only -q | tail -1`; 177 tests el 2026-08-30, de
+los cuales 16 marcados `slow`). Familias principales:
 
 - base y reglas de selección;
 - hermiticidad del operador carga–dipolo y campo electrónico;

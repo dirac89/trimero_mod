@@ -2,9 +2,55 @@
   "model": "claude-opus-5",
   "language": "es",
   "permissions": {
-    "bash": true,
-    "read": true,
-    "edit": true,
-    "write": true
+    "allow": [
+      "Bash(poetry run pytest:*)",
+      "Bash(poetry run python scripts/check_polar_convergence.py:*)",
+      "Bash(poetry run python scripts/check_double_rbcs_convergence.py:*)",
+      "Bash(poetry run python scripts/check_double_rbcs_contracted.py:*)",
+      "Bash(poetry run python scripts/check_double_rbcs_natural.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)"
+    ],
+    "deny": [
+      "Edit(tests/systems/rb_neutral_perturber/characterization/goldens/**)",
+      "Write(tests/systems/rb_neutral_perturber/characterization/goldens/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-graphify-out.sh",
+            "if": "Bash(git *)",
+            "timeout": 10,
+            "statusMessage": "Comprobando graphify-out/"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/remind-full-suite.sh",
+            "if": "Bash(git commit*)",
+            "timeout": 10,
+            "statusMessage": "Recordando la suite completa"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/shared-layer-warning.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }

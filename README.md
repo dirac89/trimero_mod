@@ -38,8 +38,10 @@ Antes de integrar cambios de física:
 poetry run pytest
 ```
 
-La suite actual contiene 156 tests. Los más lentos protegen mediante goldens
-el camino migrado desde C++.
+El tamaño de la suite lo dice pytest
+(`poetry run pytest --collect-only -q | tail -1`): 177 tests el 2026-08-30, 16
+de ellos marcados `slow`. Los lentos protegen mediante goldens el camino
+migrado desde C++.
 
 ## Ejecución por sistema
 
